@@ -3,54 +3,86 @@
   import BucketList from './pages/BucketList.svelte'
   import MyTrips from './pages/MyTrips.svelte'
   import Profile from './pages/Profile.svelte'
+  import Destination from './pages/Destination.svelte'
   let query = ''
   let route = 'home'
   let isMenuOpen = false
+  let isNavigatingForward = true
+  
   function setRouteFromHash() {
     const hash = (location.hash || '#home').replace('#', '')
-    route = hash || 'home'
+    let newRoute = ''
+    
+    if (hash.startsWith('destination/')) {
+      newRoute = 'destination'
+    } else {
+      newRoute = hash || 'home'
+    }
+    
+    route = newRoute
     isMenuOpen = false
+    
+    // Only scroll to top for forward navigation (not back button)
+    if (isNavigatingForward && typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    
+    // Reset the flag after handling the navigation
+    isNavigatingForward = true
+  }
+  
+  function handleNavigation(event) {
+    isNavigatingForward = true
+    setRouteFromHash()
   }
   if (typeof window !== 'undefined') {
     setRouteFromHash()
-    window.addEventListener('hashchange', setRouteFromHash)
+    
+    // Listen for hash changes (includes back/forward button)
+    window.addEventListener('hashchange', (event) => {
+      // Check if this is a back/forward navigation
+      const navigationType = performance.getEntriesByType('navigation')[0]?.type
+      isNavigatingForward = navigationType !== 'back_forward'
+      
+      setRouteFromHash()
+    })
+    
+    // Listen for popstate (back/forward button specifically)
+    window.addEventListener('popstate', () => {
+      isNavigatingForward = false
+    })
   }
   function search() {
     // Replace with real navigation/search later
     alert(`Search for: ${query || 'anything'}`)
   }
-  const popular = [
-    {
-      title: 'Punta Cana',
-      image: 'https://www.travelcenter.uk/blog/wp-content/uploads/2020/07/Punta-Cana.jpg',
-    },
-    {
-      title: 'Italy',
-      image: 'https://cdn.britannica.com/82/195482-050-2373E635/Amalfi-Italy.jpg',
-    },
-    {
-      title: 'Paris',
-      image: 'https://worldinparis.com/wp-content/uploads/2022/01/View-from-the-Pantheon.jpg',
-    },
-    {
-      title: 'Tokyo',
-      image: 'https://res.cloudinary.com/aenetworks/image/upload/c_fill,ar_2,w_3840,h_1920,g_auto/dpr_auto/f_auto/q_auto:eco/v1/gettyimages-1390815938?_a=BAVAZGID0',
-    },
-  ]
+  
 </script>
 
 <header class="topbar">
   <div class="container">
     <nav class="nav">
-      <a class="brand" href="#home">PINPOINT</a>
+      <a class="brand" href="#home" on:click={handleNavigation}>PINPOINT</a>
       <button class="menu-btn" aria-label="Menu" aria-expanded={isMenuOpen} on:click={() => isMenuOpen = !isMenuOpen}>
         ☰
       </button>
       <div class="links {isMenuOpen ? 'open' : ''}">
-        <a class="link {route==='home' ? 'active' : ''}" href="#home" on:click={() => isMenuOpen = false}>HOME</a>
-        <a class="link {route==='bucket' ? 'active' : ''}" href="#bucket" on:click={() => isMenuOpen = false}>BUCKET LIST</a>
-        <a class="link {route==='trips' ? 'active' : ''}" href="#trips" on:click={() => isMenuOpen = false}>MY TRIPS</a>
-        <a class="link {route==='profile' ? 'active' : ''}" href="#profile" on:click={() => isMenuOpen = false}>PROFILE</a>
+        <a class="link {route==='home' ? 'active' : ''}" href="#home" on:click={handleNavigation}>
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">Home</span>
+        </a>
+        <a class="link {route==='bucket' ? 'active' : ''}" href="#bucket" on:click={handleNavigation}>
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">Bucket List</span>
+        </a>
+        <a class="link {route==='trips' ? 'active' : ''}" href="#trips" on:click={handleNavigation}>
+          <span class="nav-icon">✈️</span>
+          <span class="nav-text">My Trips</span>
+        </a>
+        <a class="link {route==='profile' ? 'active' : ''}" href="#profile" on:click={handleNavigation}>
+          <span class="nav-icon">👤</span>
+          <span class="nav-text">Profile</span>
+        </a>
       </div>
     </nav>
   </div>
@@ -59,11 +91,13 @@
 </header>
 
 {#if route === 'home'}
-<Home {query} {popular} {search} />
+<Home {query} {search} />
 {:else if route === 'bucket'}
 <BucketList />
 {:else if route === 'trips'}
 <MyTrips />
 {:else if route === 'profile'}
 <Profile />
+{:else if route === 'destination'}
+<Destination />
 {/if}
