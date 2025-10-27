@@ -122,9 +122,19 @@ body {
   box-shadow: 0 4px 12px rgba(11, 108, 255, 0.3);
 }
 
+.link.active .nav-icon,
+.link.active .nav-text {
+  color: white !important;
+}
+
 .link.active:hover {
   background: #0056b3;
   transform: translateY(-1px);
+}
+
+.link.active:hover .nav-icon,
+.link.active:hover .nav-text {
+  color: white !important;
 }
 
 .nav-icon {
