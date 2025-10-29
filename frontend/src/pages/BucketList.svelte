@@ -63,12 +63,154 @@
       completed: false,
       dateAdded: "2024-01-05",
       image: "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400"
+    },
+    {
+      id: 7,
+      title: "Hike the Great Wall of China",
+      description: "Walk along one of the world's most iconic architectural wonders",
+      category: "mountains",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-20",
+      image: "https://images.unsplash.com/photo-1537626155334-616258acd1dc?w=400"
+    },
+    {
+      id: 8,
+      title: "Safari in the Serengeti",
+      description: "Witness the Great Migration and see the Big Five in their natural habitat",
+      category: "adventure",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-18",
+      image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400"
+    },
+    {
+      id: 9,
+      title: "Relax on the Beaches of Bora Bora",
+      description: "Experience ultimate relaxation in this tropical paradise",
+      category: "beaches",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-22",
+      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400"
+    },
+    {
+      id: 10,
+      title: "Explore the Pyramids of Giza",
+      description: "Visit one of the Seven Wonders of the Ancient World",
+      category: "adventure",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-14",
+      image: "https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=400"
+    },
+    {
+      id: 11,
+      title: "Visit the Grand Canyon",
+      description: "Marvel at one of nature's most breathtaking creations",
+      category: "mountains",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-16",
+      image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400"
+    },
+    {
+      id: 12,
+      title: "Admire the Taj Mahal at Sunrise",
+      description: "Witness the beauty of this architectural masterpiece in the early morning light",
+      category: "romantic",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-19",
+      image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400"
+    },
+    {
+      id: 13,
+      title: "Wander the Streets of Rome",
+      description: "Experience ancient history and Italian culture in the Eternal City",
+      category: "cities",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-11",
+      image: "https://images.unsplash.com/photo-1529260830199-42c9e997949b?w=400"
+    },
+    {
+      id: 14,
+      title: "Snorkel in the Great Barrier Reef",
+      description: "Explore the world's largest coral reef system",
+      category: "beaches",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-21",
+      image: "https://images.unsplash.com/photo-1582142306909-267ee9d8d264?w=400"
+    },
+    {
+      id: 15,
+      title: "Visit the Amazon Rainforest",
+      description: "Experience the biodiversity of the world's largest rainforest",
+      category: "adventure",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-17",
+      image: "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400"
+    },
+    {
+      id: 16,
+      title: "Stroll Through the Gardens of Versailles",
+      description: "Step back in time in these magnificent French royal gardens",
+      category: "romantic",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-13",
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"
+    },
+    {
+      id: 17,
+      title: "Experience New York City's Skyline",
+      description: "Take in the iconic views from the Empire State Building or Top of the Rock",
+      category: "cities",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-23",
+      image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400"
+    },
+    {
+      id: 18,
+      title: "Go Whale Watching in Alaska",
+      description: "Witness majestic humpback whales in their natural habitat",
+      category: "adventure",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-24",
+      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400"
+    },
+    {
+      id: 19,
+      title: "Hike to Angkor Wat",
+      description: "Explore the ancient temple complex at dawn in Cambodia",
+      category: "mountains",
+      priority: "high",
+      completed: false,
+      dateAdded: "2024-01-25",
+      image: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400"
+    },
+    {
+      id: 20,
+      title: "Sip Wine in Tuscany",
+      description: "Enjoy world-class wine and scenery in the Italian countryside",
+      category: "romantic",
+      priority: "medium",
+      completed: false,
+      dateAdded: "2024-01-26",
+      image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400"
     }
   ]
   
   let selectedFilter = 'all'
   let selectedSort = 'date-added'
   let searchQuery = ''
+  let currentPage = 1
+  const itemsPerPage = 10
   
   const categories = [
     { name: "All", emoji: "🌍", color: "#6366f1", value: "all" },
@@ -108,6 +250,16 @@
     }
   })
   
+  // Pagination logic
+  $: totalPages = Math.ceil(sortedItems.length / itemsPerPage)
+  
+  // Reset to page 1 when filters or search change
+  $: filterKey = `${selectedFilter}-${selectedSort}-${searchQuery}`
+  
+  $: startIndex = (currentPage - 1) * itemsPerPage
+  $: endIndex = startIndex + itemsPerPage
+  $: paginatedItems = sortedItems.slice(startIndex, endIndex)
+  
   $: incompleteItems = bucketListItems.filter(item => !item.completed)
   $: incompleteCount = incompleteItems.length
   $: completedCount = bucketListItems.filter(item => item.completed).length
@@ -127,6 +279,32 @@
       case 'low': return '#10b981'
       default: return '#6b7280'
     }
+  }
+  
+  let previousFilterKey = ''
+  
+  function nextPage() {
+    if (currentPage < totalPages) {
+      currentPage++
+    }
+  }
+  
+  function previousPage() {
+    if (currentPage > 1) {
+      currentPage--
+    }
+  }
+  
+  function goToPage(page) {
+    currentPage = page
+  }
+  
+  // Reset to page 1 when filters or search change
+  $: {
+    if (previousFilterKey && previousFilterKey !== filterKey) {
+      currentPage = 1
+    }
+    previousFilterKey = filterKey
   }
 </script>
 
@@ -201,7 +379,7 @@
         </div>
       {:else}
         <div class="items-grid">
-          {#each sortedItems as item}
+          {#each paginatedItems as item}
             <div class="bucket-item {item.completed ? 'completed' : ''}">
               <div class="item-image" style={`background-image: url('${item.image}')`}>
                 <div class="item-overlay">
@@ -233,6 +411,48 @@
             </div>
           {/each}
         </div>
+        
+        <!-- Pagination Controls -->
+        {#if totalPages > 1}
+          <div class="pagination">
+            <div class="pagination-info">
+              Showing {startIndex + 1} - {Math.min(endIndex, sortedItems.length)} of {sortedItems.length} items
+            </div>
+            <div class="pagination-controls">
+              <button 
+                class="pagination-btn" 
+                on:click={previousPage}
+                disabled={currentPage === 1}
+              >
+                ← Previous
+              </button>
+              
+              <div class="page-numbers">
+                {#each Array(totalPages) as _, i}
+                  {@const pageNum = i + 1}
+                  {#if pageNum === 1 || pageNum === totalPages || (pageNum >= currentPage - 2 && pageNum <= currentPage + 2)}
+                    <button
+                      class="page-btn {pageNum === currentPage ? 'active' : ''}"
+                      on:click={() => goToPage(pageNum)}
+                    >
+                      {pageNum}
+                    </button>
+                  {:else if pageNum === currentPage - 3 || pageNum === currentPage + 3}
+                    <span class="page-ellipsis">...</span>
+                  {/if}
+                {/each}
+              </div>
+              
+              <button 
+                class="pagination-btn" 
+                on:click={nextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+        {/if}
       {/if}
     </div>
   </section>
