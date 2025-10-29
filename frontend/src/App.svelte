@@ -4,6 +4,7 @@
   import MyTrips from './pages/MyTrips.svelte'
   import Profile from './pages/Profile.svelte'
   import Destination from './pages/Destination.svelte'
+  import Help from './pages/Help.svelte'
   let query = ''
   let route = 'home'
   let isMenuOpen = false
@@ -83,6 +84,10 @@
           <span class="nav-icon">👤</span>
           <span class="nav-text">Profile</span>
         </a>
+        <a class="link {route==='help' ? 'active' : ""}" href="#help" on:click={handleNavigation}>
+          <span class="nav-icon">❓</span>
+          <span class="nav-text">Help</span>
+        </a>
       </div>
     </nav>
   </div>
@@ -100,4 +105,6 @@
 <Profile />
 {:else if route === 'destination'}
 <Destination />
+{:else if route === 'help'}
+<Help />
 {/if}

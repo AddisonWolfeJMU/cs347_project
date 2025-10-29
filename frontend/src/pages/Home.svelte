@@ -158,8 +158,6 @@
       {/each}
     </div>
   </section>
-
-  
 </main>
 
 <!-- Styles are imported from ../styles/home.css -->
