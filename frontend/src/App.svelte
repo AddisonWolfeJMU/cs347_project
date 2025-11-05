@@ -54,8 +54,9 @@
     })
   }
   function search() {
-    // Replace with real navigation/search later
-    alert(`Search for: ${query || 'anything'}`)
+    // Trigger the filter in Home component by updating query
+    // The Home component will automatically filter based on reactive statement
+    query = query // This will trigger the reactive update in Home
   }
   
 </script>

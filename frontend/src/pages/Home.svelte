@@ -91,17 +91,33 @@
   }
   
   function filterDestinations() {
-    if (selectedCategory === 'all') {
-      filteredDestinations = Object.values(destinations)
-    } else {
-      filteredDestinations = Object.values(destinations).filter(dest => 
-        dest.category === selectedCategory
+    let results = Object.values(destinations)
+    
+    // Apply category filter
+    if (selectedCategory !== 'all') {
+      results = results.filter(dest => dest.category === selectedCategory)
+    }
+    
+    // Apply search query filter
+    if (query && query.trim() !== '') {
+      const searchTerm = query.toLowerCase().trim()
+      results = results.filter(dest => 
+        dest.name.toLowerCase().includes(searchTerm) ||
+        dest.category.toLowerCase().includes(searchTerm) ||
+        dest.id.toLowerCase().includes(searchTerm)
       )
     }
+    
+    filteredDestinations = results
   }
   
   function navigateToDestination(destinationId) {
     window.location.hash = `#destination/${destinationId}`
+  }
+  
+  // Watch for changes in query to automatically filter
+  $: if (query !== undefined) {
+    filterDestinations()
   }
   
   // Initialize filtered destinations
@@ -146,17 +162,24 @@
     <div class="container">
       <h2>Explore Popular Destinations</h2>
     </div>
-    <div class="destinations-grid">
-      {#each filteredDestinations as destination}
-        <div class="destination-card" on:click={() => navigateToDestination(destination.id)}>
-          <div class="destination-image" style={`background-image: url('${destination.image}')`}></div>
-          <div class="destination-content">
-            <h3>{destination.name}</h3>
-            <p class="destination-price">{destination.price}</p>
+    {#if filteredDestinations.length > 0}
+      <div class="destinations-grid">
+        {#each filteredDestinations as destination}
+          <div class="destination-card" on:click={() => navigateToDestination(destination.id)}>
+            <div class="destination-image" style={`background-image: url('${destination.image}')`}></div>
+            <div class="destination-content">
+              <h3>{destination.name}</h3>
+              <p class="destination-price">{destination.price}</p>
+            </div>
           </div>
-        </div>
-      {/each}
-    </div>
+        {/each}
+      </div>
+    {:else}
+      <div class="no-results">
+        <p class="no-results-text">No destinations found matching your search.</p>
+        <p class="no-results-subtext">Try adjusting your search or filter criteria.</p>
+      </div>
+    {/if}
   </section>
 </main>
 
