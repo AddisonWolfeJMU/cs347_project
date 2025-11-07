@@ -36,12 +36,12 @@ class TripAdminForm(forms.ModelForm):
             # 3. Add to the selected one
             if choice == 'bucketlist' and bucketlist:
                 bucketlist.trips.add(trip)
-                print("✅ Added to bucketlist only")
+                print("Added to bucketlist only")
             elif choice == 'mytrips' and mytrips:
                 mytrips.trips.add(trip)
-                print("✅ Added to mytrips only")
+                print("Added to mytrips only")
             else:
-                print("🚫 No list chosen — trip removed from both")
+                print("No list chosen — trip removed from both")
 
         return trip
 
@@ -106,7 +106,7 @@ class BucketListInline(admin.TabularInline):
             return qs.filter(bucketlist=self.parent_object)
         return qs
 
-    # ✅ Django doesn’t automatically provide obj to get_queryset, so we grab it from parent change_view
+    # Django doesn’t automatically provide obj to get_queryset, so we grab it from parent change_view
     def get_formset(self, request, obj=None, **kwargs):
         self.parent_object = obj
         return super().get_formset(request, obj, **kwargs)
@@ -139,10 +139,10 @@ class BucketListAdmin(admin.ModelAdmin):
     inlines = [BucketListInline]
     readonly_fields = ('user',)
     def has_add_permission(self, request, obj=None):
-        return False  # ✅ no manual adds allowed
+        return False  # no manual adds allowed
 
     def has_change_permission(self, request, obj=None):
-        return False  # ✅ fully read-only inline
+        return False  # fully read-only inline
 
 
 @admin.register(MyTrips)
@@ -151,7 +151,7 @@ class MyTripsAdmin(admin.ModelAdmin):
     inlines = [MyTripsInline]
     readonly_fields = ('user',)
     def has_add_permission(self, request, obj=None):
-        return False  # ✅ no manual adds allowed
+        return False  # no manual adds allowed
 
     def has_change_permission(self, request, obj=None):
-        return False  # ✅ fully read-only inline
+        return False  # fully read-only inline

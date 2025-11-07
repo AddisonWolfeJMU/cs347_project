@@ -54,14 +54,14 @@ class MyTrips(models.Model):
     def __str__(self):
         return f"{self.user.username}'s Trips"
 
-
 class BucketList(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="bucket_list",null=True, blank=True)
     trips = models.ManyToManyField(Trip, related_name='bucketlists', blank=True)
     def __str__(self):
         return f"{self.user.username}'s Bucket List"
 
-# ✅ Auto-create both lists for every user
+
+# Auto-create both lists for every user
 @receiver(post_save, sender=User)
 def create_user_lists(sender, instance, created, **kwargs):
     if created:
