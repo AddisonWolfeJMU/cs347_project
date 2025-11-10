@@ -1,210 +1,44 @@
 <script>
   import '../styles/bucket-list.css'
+  import { getBucketList } from '../lib/api.js'
+  import { onMount } from 'svelte'
   
-  // Sample bucket list data - will be replaced with backend data later
-  let bucketListItems = [
-    {
-      id: 1,
-      title: "Visit the Northern Lights in Iceland",
-      description: "Experience the magical aurora borealis in Iceland's winter landscape",
-      category: "adventure",
-      priority: "high",
+  // Bucket list data from backend
+  let bucketListItems = []
+  let loading = true
+  let error = null
+  
+  // Load bucket list data from backend
+  async function loadBucketList() {
+    loading = true
+    error = null
+    try {
+      const response = await getBucketList()
+      if (response.success && response.trips) {
+        // Transform backend data to match UI structure
+        bucketListItems = response.trips.map(trip => ({
+          id: trip.id,
+          title: trip.name || trip.location,
+          description: trip.location || `Trip to ${trip.name || 'Unknown'}`,
+          category: "adventure", // Default category since backend doesn't have this
+          priority: "medium", // Default priority
       completed: false,
-      dateAdded: "2024-01-15",
-      image: "https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=400"
-    },
-    {
-      id: 2,
-      title: "Skydive in Dubai",
-      description: "Jump from the world's highest skydiving location",
-      category: "adventure",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-10",
-      image: "https://images.unsplash.com/photo-1551524164-6cf2ac531c8b?w=400"
-    },
-    {
-      id: 3,
-      title: "Watch Sunrise at Machu Picchu",
-      description: "Witness the ancient Incan city at dawn",
-      category: "mountains",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-08",
-      image: "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400"
-    },
-    {
-      id: 4,
-      title: "Swim with Dolphins in Hawaii",
-      description: "Experience the joy of swimming with these intelligent creatures",
-      category: "beaches",
-      priority: "medium",
-      completed: true,
-      dateAdded: "2023-12-20",
-      completedDate: "2024-01-05",
-      image: "https://images.unsplash.com/photo-1544551763-77ef2d0cfc6c?w=400"
-    },
-    {
-      id: 5,
-      title: "Explore the Streets of Tokyo",
-      description: "Immerse yourself in the vibrant culture and cuisine of Tokyo",
-      category: "cities",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-12",
-      image: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400"
-    },
-    {
-      id: 6,
-      title: "Romantic Dinner in Paris",
-      description: "Enjoy a candlelit dinner overlooking the Eiffel Tower",
-      category: "romantic",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-05",
-      image: "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=400"
-    },
-    {
-      id: 7,
-      title: "Hike the Great Wall of China",
-      description: "Walk along one of the world's most iconic architectural wonders",
-      category: "mountains",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-20",
-      image: "https://images.unsplash.com/photo-1537626155334-616258acd1dc?w=400"
-    },
-    {
-      id: 8,
-      title: "Safari in the Serengeti",
-      description: "Witness the Great Migration and see the Big Five in their natural habitat",
-      category: "adventure",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-18",
-      image: "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=400"
-    },
-    {
-      id: 9,
-      title: "Relax on the Beaches of Bora Bora",
-      description: "Experience ultimate relaxation in this tropical paradise",
-      category: "beaches",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-22",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400"
-    },
-    {
-      id: 10,
-      title: "Explore the Pyramids of Giza",
-      description: "Visit one of the Seven Wonders of the Ancient World",
-      category: "adventure",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-14",
-      image: "https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=400"
-    },
-    {
-      id: 11,
-      title: "Visit the Grand Canyon",
-      description: "Marvel at one of nature's most breathtaking creations",
-      category: "mountains",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-16",
-      image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=400"
-    },
-    {
-      id: 12,
-      title: "Admire the Taj Mahal at Sunrise",
-      description: "Witness the beauty of this architectural masterpiece in the early morning light",
-      category: "romantic",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-19",
-      image: "https://images.unsplash.com/photo-1564507592333-c60657eea523?w=400"
-    },
-    {
-      id: 13,
-      title: "Wander the Streets of Rome",
-      description: "Experience ancient history and Italian culture in the Eternal City",
-      category: "cities",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-11",
-      image: "https://images.unsplash.com/photo-1529260830199-42c9e997949b?w=400"
-    },
-    {
-      id: 14,
-      title: "Snorkel in the Great Barrier Reef",
-      description: "Explore the world's largest coral reef system",
-      category: "beaches",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-21",
-      image: "https://images.unsplash.com/photo-1582142306909-267ee9d8d264?w=400"
-    },
-    {
-      id: 15,
-      title: "Visit the Amazon Rainforest",
-      description: "Experience the biodiversity of the world's largest rainforest",
-      category: "adventure",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-17",
-      image: "https://images.unsplash.com/photo-1464037866556-6812c9d1c72e?w=400"
-    },
-    {
-      id: 16,
-      title: "Stroll Through the Gardens of Versailles",
-      description: "Step back in time in these magnificent French royal gardens",
-      category: "romantic",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-13",
-      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400"
-    },
-    {
-      id: 17,
-      title: "Experience New York City's Skyline",
-      description: "Take in the iconic views from the Empire State Building or Top of the Rock",
-      category: "cities",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-23",
-      image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=400"
-    },
-    {
-      id: 18,
-      title: "Go Whale Watching in Alaska",
-      description: "Witness majestic humpback whales in their natural habitat",
-      category: "adventure",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-24",
-      image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400"
-    },
-    {
-      id: 19,
-      title: "Hike to Angkor Wat",
-      description: "Explore the ancient temple complex at dawn in Cambodia",
-      category: "mountains",
-      priority: "high",
-      completed: false,
-      dateAdded: "2024-01-25",
-      image: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=400"
-    },
-    {
-      id: 20,
-      title: "Sip Wine in Tuscany",
-      description: "Enjoy world-class wine and scenery in the Italian countryside",
-      category: "romantic",
-      priority: "medium",
-      completed: false,
-      dateAdded: "2024-01-26",
-      image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=400"
+          dateAdded: trip.date || new Date().toISOString().split('T')[0],
+          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" // Default travel image
+        }))
+      }
+    } catch (err) {
+      console.error('Error loading bucket list:', err)
+      error = err.message || 'Failed to load bucket list'
+    } finally {
+      loading = false
     }
-  ]
+  }
+  
+  // Load data when component mounts
+  onMount(() => {
+    loadBucketList()
+  })
   
   let selectedFilter = 'all'
   let selectedSort = 'date-added'
@@ -235,6 +69,9 @@
     const isNotCompleted = !item.completed
     return matchesFilter && matchesSearch && isNotCompleted
   })
+  
+  // Handle empty state when loading or error
+  $: hasItems = bucketListItems.length > 0
   
   $: sortedItems = [...filteredItems].sort((a, b) => {
     switch (selectedSort) {
@@ -371,11 +208,29 @@
   <!-- Bucket List Items -->
   <section class="bucket-items">
     <div class="container">
-      {#if sortedItems.length === 0}
+      {#if loading}
+        <div class="empty-state">
+          <div class="empty-icon">⏳</div>
+          <h3>Loading...</h3>
+          <p>Loading your bucket list items...</p>
+        </div>
+      {:else if error}
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <h3>Error loading bucket list</h3>
+          <p>{error}</p>
+        </div>
+      {:else if sortedItems.length === 0 && hasItems}
         <div class="empty-state">
           <div class="empty-icon">📝</div>
           <h3>No items found</h3>
           <p>Try adjusting your search or filters to find what you're looking for.</p>
+        </div>
+      {:else if !hasItems}
+        <div class="empty-state">
+          <div class="empty-icon">📝</div>
+          <h3>Your bucket list is empty</h3>
+          <p>Start adding trips to your bucket list to see them here!</p>
         </div>
       {:else}
         <div class="items-grid">

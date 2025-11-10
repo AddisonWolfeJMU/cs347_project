@@ -48,12 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'api',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -146,3 +148,44 @@ STORAGES = {
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# CORS settings for frontend-backend communication
+# IMPORTANT: Make sure your frontend URL matches one of these!
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+CORS_EXPOSE_HEADERS = ['Set-Cookie', 'Content-Type']
+
+# Allow all origins in development (for easier debugging)
+# Remove this in production!
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = False  # Keep False, use CORS_ALLOWED_ORIGINS instead
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Session configuration for cross-origin requests
+# For localhost development, we'll use 'Lax' which should work
+# If this doesn't work, try setting both frontend and backend to use the same origin (localhost or 127.0.0.1)
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True  
+SESSION_COOKIE_SECURE = False  # Must be False for localhost (no HTTPS)
+SESSION_COOKIE_AGE = 1209600  # 2 weeks (14 days)
+SESSION_SAVE_EVERY_REQUEST = True  # Keep session alive
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Persist after browser close
+SESSION_COOKIE_DOMAIN = None  # None allows cookie for exact domain match
+SESSION_COOKIE_PATH = '/'  # Available for all paths
+SESSION_COOKIE_NAME = 'sessionid'  # Default session cookie name
