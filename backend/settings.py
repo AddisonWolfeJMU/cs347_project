@@ -32,8 +32,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-5jtas8j_uj6@qg!dlot=w_fnj)7=f_$!nid-^--e!!nzqo3a9!'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ['pinpoint-aaawo.ondigitalocean.app', 'localhost', '127.0.0.1']
 
