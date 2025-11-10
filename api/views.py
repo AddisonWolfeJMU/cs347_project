@@ -381,3 +381,242 @@ def my_trips_view(request):
             "success": False,
             "error": str(e)
         }, status=500)
+
+
+### Create Trip ###
+@json_login_required
+@csrf_exempt
+def create_trip_view(request):
+    """Create a new trip"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        name = data.get("name")
+        location = data.get("location")
+        date_str = data.get("date")
+        
+        # Validation
+        if not name or not location:
+            return JsonResponse({"error": "Name and location are required."}, status=400)
+        
+        # Parse date if provided
+        date = None
+        if date_str:
+            from datetime import datetime
+            try:
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+        
+        # Create trip
+        trip = Trip.objects.create(
+            user=user,
+            name=name,
+            location=location,
+            date=date
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "trip": {
+                "id": trip.id,
+                "name": trip.name,
+                "location": trip.location,
+                "date": trip.date.isoformat() if trip.date else None,
+            }
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Add Trip to Bucket List ###
+@json_login_required
+@csrf_exempt
+def add_to_bucket_list_view(request):
+    """Add a trip to the user's bucket list"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        trip_id = data.get("trip_id")
+        if not trip_id:
+            return JsonResponse({"error": "trip_id is required."}, status=400)
+        
+        try:
+            trip = Trip.objects.get(id=trip_id)
+        except Trip.DoesNotExist:
+            return JsonResponse({"error": "Trip not found."}, status=404)
+        
+        bucket_list, created = BucketList.objects.get_or_create(user=user)
+        bucket_list.trips.add(trip)
+        
+        return JsonResponse({
+            "success": True,
+            "message": "Trip added to bucket list successfully."
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Add Trip to My Trips ###
+@json_login_required
+@csrf_exempt
+def add_to_my_trips_view(request):
+    """Add a trip to the user's MyTrips"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        trip_id = data.get("trip_id")
+        if not trip_id:
+            return JsonResponse({"error": "trip_id is required."}, status=400)
+        
+        try:
+            trip = Trip.objects.get(id=trip_id)
+        except Trip.DoesNotExist:
+            return JsonResponse({"error": "Trip not found."}, status=404)
+        
+        my_trips, created = MyTrips.objects.get_or_create(user=user)
+        my_trips.trips.add(trip)
+        
+        return JsonResponse({
+            "success": True,
+            "message": "Trip added to My Trips successfully."
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create Trip and Add to Bucket List ###
+@json_login_required
+@csrf_exempt
+def create_trip_for_bucket_list_view(request):
+    """Create a new trip and add it to bucket list in one call"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        name = data.get("name")
+        location = data.get("location")
+        date_str = data.get("date")
+        
+        # Validation
+        if not name or not location:
+            return JsonResponse({"error": "Name and location are required."}, status=400)
+        
+        # Parse date if provided
+        date = None
+        if date_str:
+            from datetime import datetime
+            try:
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+        
+        # Create trip
+        trip = Trip.objects.create(
+            user=user,
+            name=name,
+            location=location,
+            date=date
+        )
+        
+        # Add to bucket list
+        bucket_list, created = BucketList.objects.get_or_create(user=user)
+        bucket_list.trips.add(trip)
+        
+        return JsonResponse({
+            "success": True,
+            "trip": {
+                "id": trip.id,
+                "name": trip.name,
+                "location": trip.location,
+                "date": trip.date.isoformat() if trip.date else None,
+            },
+            "message": "Trip created and added to bucket list successfully."
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create Trip and Add to My Trips ###
+@json_login_required
+@csrf_exempt
+def create_trip_for_my_trips_view(request):
+    """Create a new trip and add it to MyTrips in one call"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        data = json.loads(request.body)
+        user = request.user
+        
+        name = data.get("name")
+        location = data.get("location")
+        date_str = data.get("date")
+        
+        # Validation
+        if not name or not location:
+            return JsonResponse({"error": "Name and location are required."}, status=400)
+        
+        # Parse date if provided
+        date = None
+        if date_str:
+            from datetime import datetime
+            try:
+                date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            except ValueError:
+                return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+        
+        # Create trip
+        trip = Trip.objects.create(
+            user=user,
+            name=name,
+            location=location,
+            date=date
+        )
+        
+        # Add to MyTrips
+        my_trips, created = MyTrips.objects.get_or_create(user=user)
+        my_trips.trips.add(trip)
+        
+        return JsonResponse({
+            "success": True,
+            "trip": {
+                "id": trip.id,
+                "name": trip.name,
+                "location": trip.location,
+                "date": trip.date.isoformat() if trip.date else None,
+            },
+            "message": "Trip created and added to My Trips successfully."
+        })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)

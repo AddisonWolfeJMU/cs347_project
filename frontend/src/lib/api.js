@@ -152,3 +152,78 @@ export async function getMyTrips() {
     throw error;
   }
 }
+
+/**
+ * Create a new trip
+ */
+export async function createTrip(tripData) {
+  try {
+    return await apiRequest('/trips/create/', {
+      method: 'POST',
+      body: JSON.stringify(tripData),
+    });
+  } catch (error) {
+    console.error('Error creating trip:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add trip to bucket list
+ */
+export async function addTripToBucketList(tripId) {
+  try {
+    return await apiRequest('/trips/add-to-bucket-list/', {
+      method: 'POST',
+      body: JSON.stringify({ trip_id: tripId }),
+    });
+  } catch (error) {
+    console.error('Error adding trip to bucket list:', error);
+    throw error;
+  }
+}
+
+/**
+ * Add trip to My Trips
+ */
+export async function addTripToMyTrips(tripId) {
+  try {
+    return await apiRequest('/trips/add-to-my-trips/', {
+      method: 'POST',
+      body: JSON.stringify({ trip_id: tripId }),
+    });
+  } catch (error) {
+    console.error('Error adding trip to my trips:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create trip and add to bucket list in one call
+ */
+export async function createTripForBucketList(tripData) {
+  try {
+    return await apiRequest('/trips/create-for-bucket-list/', {
+      method: 'POST',
+      body: JSON.stringify(tripData),
+    });
+  } catch (error) {
+    console.error('Error creating trip for bucket list:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create trip and add to My Trips in one call
+ */
+export async function createTripForMyTrips(tripData) {
+  try {
+    return await apiRequest('/trips/create-for-my-trips/', {
+      method: 'POST',
+      body: JSON.stringify(tripData),
+    });
+  } catch (error) {
+    console.error('Error creating trip for my trips:', error);
+    throw error;
+  }
+}

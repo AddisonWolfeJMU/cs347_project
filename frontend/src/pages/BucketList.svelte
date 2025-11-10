@@ -1,12 +1,22 @@
 <script>
   import '../styles/bucket-list.css'
-  import { getBucketList } from '../lib/api.js'
+  import { getBucketList, createTripForBucketList } from '../lib/api.js'
   import { onMount } from 'svelte'
   
   // Bucket list data from backend
   let bucketListItems = []
   let loading = true
   let error = null
+  
+  // Form state
+  let showAddForm = false
+  let formData = {
+    name: '',
+    location: '',
+    date: ''
+  }
+  let formError = null
+  let formLoading = false
   
   // Load bucket list data from backend
   async function loadBucketList() {
@@ -39,6 +49,50 @@
   onMount(() => {
     loadBucketList()
   })
+  
+  // Handle form submission
+  async function handleAddTrip() {
+    formError = null
+    formLoading = true
+    
+    if (!formData.name || !formData.location) {
+      formError = 'Name and location are required'
+      formLoading = false
+      return
+    }
+    
+    try {
+      const response = await createTripForBucketList({
+        name: formData.name,
+        location: formData.location,
+        date: formData.date || null
+      })
+      
+      if (response.success) {
+        // Reset form
+        formData = { name: '', location: '', date: '' }
+        showAddForm = false
+        // Reload bucket list
+        await loadBucketList()
+      }
+    } catch (err) {
+      formError = err.message || 'Failed to create trip'
+    } finally {
+      formLoading = false
+    }
+  }
+  
+  function openAddForm() {
+    showAddForm = true
+    formError = null
+    formData = { name: '', location: '', date: '' }
+  }
+  
+  function closeAddForm() {
+    showAddForm = false
+    formError = null
+    formData = { name: '', location: '', date: '' }
+  }
   
   let selectedFilter = 'all'
   let selectedSort = 'date-added'
@@ -318,14 +372,222 @@
       <div class="cta-content">
         <h2>Ready to add more dreams?</h2>
         <p>Start building your ultimate bucket list today</p>
-        <button class="add-item-btn" disabled>
+        <button class="add-item-btn" on:click={openAddForm}>
           <span class="btn-icon">+</span>
           Add New Item
-          <small>(Coming Soon)</small>
         </button>
       </div>
     </div>
   </section>
 </main>
+
+<!-- Add Trip Modal -->
+{#if showAddForm}
+  <div class="modal-overlay" on:click={closeAddForm}>
+    <div class="modal-content" on:click|stopPropagation>
+      <div class="modal-header">
+        <h2>Add New Trip to Bucket List</h2>
+        <button class="modal-close" on:click={closeAddForm}>×</button>
+      </div>
+      
+      <form on:submit|preventDefault={handleAddTrip} class="trip-form">
+        {#if formError}
+          <div class="form-error">{formError}</div>
+        {/if}
+        
+        <div class="form-group">
+          <label for="trip-name">Trip Name *</label>
+          <input
+            id="trip-name"
+            type="text"
+            bind:value={formData.name}
+            placeholder="e.g., Visit Paris"
+            required
+            disabled={formLoading}
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="trip-location">Location *</label>
+          <input
+            id="trip-location"
+            type="text"
+            bind:value={formData.location}
+            placeholder="e.g., Paris, France"
+            required
+            disabled={formLoading}
+          />
+        </div>
+        
+        <div class="form-group">
+          <label for="trip-date">Date (Optional)</label>
+          <input
+            id="trip-date"
+            type="date"
+            bind:value={formData.date}
+            disabled={formLoading}
+          />
+        </div>
+        
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" on:click={closeAddForm} disabled={formLoading}>
+            Cancel
+          </button>
+          <button type="submit" class="btn-submit" disabled={formLoading}>
+            {formLoading ? 'Adding...' : 'Add to Bucket List'}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+{/if}
+
+<style>
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+  }
+  
+  .modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #1f2937;
+  }
+  
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+  
+  .modal-close:hover {
+    background: #f3f4f6;
+    color: #1f2937;
+  }
+  
+  .trip-form {
+    padding: 24px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #374151;
+    font-size: 14px;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  
+  .form-group input:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+  
+  .form-group input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+  
+  .form-error {
+    background: #fee2e2;
+    color: #dc2626;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 14px;
+  }
+  
+  .form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+  }
+  
+  .btn-cancel,
+  .btn-submit {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  
+  .btn-cancel {
+    background: #f3f4f6;
+    color: #374151;
+  }
+  
+  .btn-cancel:hover:not(:disabled) {
+    background: #e5e7eb;
+  }
+  
+  .btn-submit {
+    background: #6366f1;
+    color: white;
+  }
+  
+  .btn-submit:hover:not(:disabled) {
+    background: #4f46e5;
+  }
+  
+  .btn-cancel:disabled,
+  .btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+</style>
 
 
