@@ -1,7 +1,7 @@
 // API configuration
 // IMPORTANT: Make sure this matches your frontend origin format!
 // If frontend is on localhost, use localhost. If on 127.0.0.1, use 127.0.0.1
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 /**
  * Make an API request with proper error handling
