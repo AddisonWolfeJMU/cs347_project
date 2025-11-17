@@ -32,6 +32,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-5jtas8j_uj6@qg!dlot=w_fnj)7=f_$!nid-^--e!!nzqo3a9!'
 
+# SECURITY WARNING: don't run with debug turned on in production!
+# Force DEBUG to True for development (override ENVIRONMENT check if needed)
+DEBUG = True
 
 ALLOWED_HOSTS = ['pinpoint-aaawo.ondigitalocean.app', 'localhost', '127.0.0.1']
 
@@ -141,7 +144,24 @@ STATICFILES_DIRS = [
     BASE_DIR / 'backend' / 'static'
 ]
 
+# Media files (user uploads)
+# Store media files outside the project folder to avoid cluttering the repo
+MEDIA_URL = '/media/'
+# Option 1: Store in user's Documents folder (recommended for development)
+# Uncomment the line below and adjust the path as needed
+# MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'Documents', 'pinpoint_media')
+
+# Option 2: Store in a dedicated folder on OneDrive (since you're using OneDrive)
+# Uncomment and adjust if you prefer this location
+MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'OneDrive', 'Desktop', 'cs347', 'pinpoint_media')
+
+# Option 3: Keep in project folder (current - comment out if using options above)
+# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"
     }

@@ -8,7 +8,59 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_http_methods
 from functools import wraps
-from .models import BucketList, MyTrips, Trip
+from .models import BucketList, MyTrips, Trip, Plan, BNB, Rating, Review
+from django.conf import settings
+
+
+### Helper function to build image URLs ###
+def get_image_url(request, image_field):
+    """Build absolute URL for an image field"""
+    if not image_field:
+        return None
+    try:
+        # Get the relative URL from the image field (e.g., /media/trip_images/photo.jpg)
+        relative_url = image_field.url
+        
+        # Use Django's build_absolute_uri which handles host/port correctly
+        # This should use the backend server's host (e.g., localhost:8000)
+        absolute_url = request.build_absolute_uri(relative_url)
+        
+        # Debug: print the URL to help diagnose issues
+        if settings.DEBUG:
+            print(f"Image URL generated: {absolute_url} (from relative: {relative_url}, host: {request.get_host()})")
+        
+        return absolute_url
+    except Exception as e:
+        # Fallback: construct URL manually if build_absolute_uri fails
+        print(f"Error in build_absolute_uri: {e}")
+        try:
+            if hasattr(image_field, 'name') and image_field.name:
+                # Ensure MEDIA_URL starts with /
+                media_url = settings.MEDIA_URL
+                if not media_url.startswith('/'):
+                    media_url = '/' + media_url
+                # Ensure proper path joining
+                if media_url.endswith('/') and image_field.name.startswith('/'):
+                    image_path = media_url.rstrip('/') + image_field.name
+                elif not media_url.endswith('/') and not image_field.name.startswith('/'):
+                    image_path = media_url + '/' + image_field.name
+                else:
+                    image_path = media_url + image_field.name
+                
+                host = request.get_host()
+                # Ensure port is included for backend server
+                if ':' not in host and settings.DEBUG:
+                    # Default to port 8000 for Django dev server
+                    host = f"{host}:8000"
+                scheme = request.scheme
+                fallback_url = f"{scheme}://{host}{image_path}"
+                if settings.DEBUG:
+                    print(f"Fallback image URL: {fallback_url}")
+                return fallback_url
+        except Exception as fallback_error:
+            print(f"Error building image URL (fallback): {fallback_error}")
+            pass
+        return None
 
 
 ### Custom decorator for JSON API endpoints that require login ###
@@ -335,11 +387,14 @@ def bucket_list_view(request):
         
         trips_data = []
         for trip in trips:
+            image_url = get_image_url(request, trip.image)
+            
             trips_data.append({
                 "id": trip.id,
                 "name": trip.name,
                 "location": trip.location,
                 "date": trip.date.isoformat() if trip.date else None,
+                "image": image_url,
             })
         
         return JsonResponse({
@@ -365,11 +420,14 @@ def my_trips_view(request):
         
         trips_data = []
         for trip in trips:
+            image_url = get_image_url(request, trip.image)
+            
             trips_data.append({
                 "id": trip.id,
                 "name": trip.name,
                 "location": trip.location,
                 "date": trip.date.isoformat() if trip.date else None,
+                "image": image_url,
             })
         
         return JsonResponse({
@@ -515,12 +573,24 @@ def create_trip_for_bucket_list_view(request):
         return JsonResponse({"error": "POST request required."}, status=400)
     
     try:
-        data = json.loads(request.body)
         user = request.user
         
-        name = data.get("name")
-        location = data.get("location")
-        date_str = data.get("date")
+        # Handle both JSON and multipart/form-data
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            name = request.POST.get("name")
+            location = request.POST.get("location")
+            date_str = request.POST.get("date")
+            image = request.FILES.get("image")
+        else:
+            # Try JSON
+            try:
+                data = json.loads(request.body)
+                name = data.get("name")
+                location = data.get("location")
+                date_str = data.get("date")
+                image = None
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Invalid request format."}, status=400)
         
         # Validation
         if not name or not location:
@@ -540,12 +610,16 @@ def create_trip_for_bucket_list_view(request):
             user=user,
             name=name,
             location=location,
-            date=date
+            date=date,
+            image=image if image else None
         )
         
         # Add to bucket list
         bucket_list, created = BucketList.objects.get_or_create(user=user)
         bucket_list.trips.add(trip)
+        
+        # Build image URL if image exists
+        image_url = get_image_url(request, trip.image)
         
         return JsonResponse({
             "success": True,
@@ -554,6 +628,7 @@ def create_trip_for_bucket_list_view(request):
                 "name": trip.name,
                 "location": trip.location,
                 "date": trip.date.isoformat() if trip.date else None,
+                "image": image_url,
             },
             "message": "Trip created and added to bucket list successfully."
         })
@@ -573,12 +648,24 @@ def create_trip_for_my_trips_view(request):
         return JsonResponse({"error": "POST request required."}, status=400)
     
     try:
-        data = json.loads(request.body)
         user = request.user
         
-        name = data.get("name")
-        location = data.get("location")
-        date_str = data.get("date")
+        # Handle both JSON and multipart/form-data
+        if request.content_type and 'multipart/form-data' in request.content_type:
+            name = request.POST.get("name")
+            location = request.POST.get("location")
+            date_str = request.POST.get("date")
+            image = request.FILES.get("image")
+        else:
+            # Try JSON
+            try:
+                data = json.loads(request.body)
+                name = data.get("name")
+                location = data.get("location")
+                date_str = data.get("date")
+                image = None
+            except json.JSONDecodeError:
+                return JsonResponse({"error": "Invalid request format."}, status=400)
         
         # Validation
         if not name or not location:
@@ -598,12 +685,16 @@ def create_trip_for_my_trips_view(request):
             user=user,
             name=name,
             location=location,
-            date=date
+            date=date,
+            image=image if image else None
         )
         
         # Add to MyTrips
         my_trips, created = MyTrips.objects.get_or_create(user=user)
         my_trips.trips.add(trip)
+        
+        # Build image URL if image exists
+        image_url = get_image_url(request, trip.image)
         
         return JsonResponse({
             "success": True,
@@ -612,9 +703,337 @@ def create_trip_for_my_trips_view(request):
                 "name": trip.name,
                 "location": trip.location,
                 "date": trip.date.isoformat() if trip.date else None,
+                "image": image_url,
             },
             "message": "Trip created and added to My Trips successfully."
         })
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Get Trip Details ###
+@json_login_required
+@csrf_exempt
+def get_trip_view(request, trip_id):
+    """Get detailed information about a specific trip"""
+    user = request.user
+    try:
+        trip = Trip.objects.get(id=trip_id, user=user)
+        
+        # Check if trip is in MyTrips (completed) or just in BucketList (not completed)
+        my_trips, _ = MyTrips.objects.get_or_create(user=user)
+        is_completed = my_trips.trips.filter(id=trip_id).exists()
+        
+        # Get image URL
+        image_url = get_image_url(request, trip.image)
+        
+        # Get plans
+        plans = trip.plans.all()
+        plans_data = [{
+            "id": plan.id,
+            "name": plan.name,
+            "activity": plan.activity or "",
+        } for plan in plans]
+        
+        # Get BNB if exists
+        bnb_data = None
+        try:
+            bnb = trip.bnbs
+            # Get ratings and reviews for this BNB (only if trip is completed)
+            ratings = bnb.ratings.all()
+            reviews = bnb.reviews.all()
+            
+            avg_rating = None
+            if ratings.exists():
+                avg_rating = sum(r.value for r in ratings) / ratings.count()
+            
+            ratings_data = [{"id": r.id, "value": r.value} for r in ratings]
+            reviews_data = [{
+                "id": rev.id,
+                "statement": rev.statement,
+                "rating_id": rev.rating.id if rev.rating else None,
+            } for rev in reviews]
+            
+            bnb_data = {
+                "id": bnb.id,
+                "name": bnb.name,
+                "address": bnb.address,
+                "availability": bnb.availability,
+                "average_rating": round(avg_rating, 1) if avg_rating else None,
+                "ratings": ratings_data if is_completed else [],  # Only show ratings if completed
+                "reviews": reviews_data if is_completed else [],  # Only show reviews if completed
+            }
+        except BNB.DoesNotExist:
+            pass
+        
+        return JsonResponse({
+            "success": True,
+            "trip": {
+                "id": trip.id,
+                "name": trip.name,
+                "location": trip.location,
+                "date": trip.date.isoformat() if trip.date else None,
+                "image": image_url,
+                "plans": plans_data,
+                "bnb": bnb_data,
+                "is_completed": is_completed,  # Flag to indicate if trip is completed
+            }
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create Plan for Trip ###
+@json_login_required
+@csrf_exempt
+def create_plan_view(request, trip_id):
+    """Create a plan/activity for a trip"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        user = request.user
+        trip = Trip.objects.get(id=trip_id, user=user)
+        
+        data = json.loads(request.body)
+        name = data.get("name", "")
+        activity = data.get("activity", "")
+        
+        plan = Plan.objects.create(
+            trip=trip,
+            name=name,
+            activity=activity
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "plan": {
+                "id": plan.id,
+                "name": plan.name,
+                "activity": plan.activity or "",
+            }
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Delete Plan ###
+@json_login_required
+@csrf_exempt
+def delete_plan_view(request, plan_id):
+    """Delete a plan"""
+    if request.method != "DELETE":
+        return JsonResponse({"error": "DELETE request required."}, status=400)
+    
+    try:
+        user = request.user
+        plan = Plan.objects.get(id=plan_id, trip__user=user)
+        plan.delete()
+        
+        return JsonResponse({
+            "success": True,
+            "message": "Plan deleted successfully."
+        })
+    except Plan.DoesNotExist:
+        return JsonResponse({"error": "Plan not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create BNB for Trip ###
+@json_login_required
+@csrf_exempt
+def create_bnb_view(request, trip_id):
+    """Create a BNB/accommodation for a trip"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        user = request.user
+        trip = Trip.objects.get(id=trip_id, user=user)
+        
+        # Check if BNB already exists (OneToOne relationship)
+        if hasattr(trip, 'bnbs'):
+            return JsonResponse({"error": "BNB already exists for this trip."}, status=400)
+        
+        data = json.loads(request.body)
+        name = data.get("name", "")
+        address = data.get("address", "")
+        availability = data.get("availability", True)
+        
+        bnb = BNB.objects.create(
+            trip=trip,
+            name=name,
+            address=address,
+            availability=availability
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "bnb": {
+                "id": bnb.id,
+                "name": bnb.name,
+                "address": bnb.address,
+                "availability": bnb.availability,
+            }
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Update BNB ###
+@json_login_required
+@csrf_exempt
+def update_bnb_view(request, bnb_id):
+    """Update a BNB"""
+    if request.method not in ["PUT", "PATCH", "POST"]:
+        return JsonResponse({"error": "PUT, PATCH, or POST request required."}, status=400)
+    
+    try:
+        user = request.user
+        bnb = BNB.objects.get(id=bnb_id, trip__user=user)
+        
+        data = json.loads(request.body)
+        
+        if "name" in data:
+            bnb.name = data.get("name")
+        if "address" in data:
+            bnb.address = data.get("address")
+        if "availability" in data:
+            bnb.availability = data.get("availability")
+        
+        bnb.save()
+        
+        return JsonResponse({
+            "success": True,
+            "bnb": {
+                "id": bnb.id,
+                "name": bnb.name,
+                "address": bnb.address,
+                "availability": bnb.availability,
+            }
+        })
+    except BNB.DoesNotExist:
+        return JsonResponse({"error": "BNB not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create Rating for BNB ###
+@json_login_required
+@csrf_exempt
+def create_rating_view(request, bnb_id):
+    """Create a rating for a BNB (only for completed trips)"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        user = request.user
+        bnb = BNB.objects.get(id=bnb_id, trip__user=user)
+        
+        # Check if trip is in MyTrips (completed)
+        my_trips, _ = MyTrips.objects.get_or_create(user=user)
+        if not my_trips.trips.filter(id=bnb.trip.id).exists():
+            return JsonResponse({"error": "Cannot rate BNB for trips that haven't been completed yet."}, status=403)
+        
+        data = json.loads(request.body)
+        value = data.get("value")
+        
+        if not value or not (1 <= value <= 5):
+            return JsonResponse({"error": "Rating must be between 1 and 5."}, status=400)
+        
+        rating = Rating.objects.create(
+            bnb=bnb,
+            value=value
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "rating": {
+                "id": rating.id,
+                "value": rating.value,
+            }
+        })
+    except BNB.DoesNotExist:
+        return JsonResponse({"error": "BNB not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Create Review for BNB ###
+@json_login_required
+@csrf_exempt
+def create_review_view(request, bnb_id):
+    """Create a review for a BNB (only for completed trips)"""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+    
+    try:
+        user = request.user
+        bnb = BNB.objects.get(id=bnb_id, trip__user=user)
+        
+        # Check if trip is in MyTrips (completed)
+        my_trips, _ = MyTrips.objects.get_or_create(user=user)
+        if not my_trips.trips.filter(id=bnb.trip.id).exists():
+            return JsonResponse({"error": "Cannot review BNB for trips that haven't been completed yet."}, status=403)
+        
+        data = json.loads(request.body)
+        statement = data.get("statement", "")
+        rating_id = data.get("rating_id")
+        
+        if not statement:
+            return JsonResponse({"error": "Review statement is required."}, status=400)
+        
+        rating = None
+        if rating_id:
+            try:
+                rating = Rating.objects.get(id=rating_id, bnb=bnb)
+            except Rating.DoesNotExist:
+                pass
+        
+        review = Review.objects.create(
+            bnb=bnb,
+            statement=statement,
+            rating=rating
+        )
+        
+        return JsonResponse({
+            "success": True,
+            "review": {
+                "id": review.id,
+                "statement": review.statement,
+                "rating_id": review.rating.id if review.rating else None,
+            }
+        })
+    except BNB.DoesNotExist:
+        return JsonResponse({"error": "BNB not found."}, status=404)
     except Exception as e:
         return JsonResponse({
             "success": False,

@@ -203,10 +203,37 @@ export async function addTripToMyTrips(tripId) {
  */
 export async function createTripForBucketList(tripData) {
   try {
-    return await apiRequest('/trips/create-for-bucket-list/', {
-      method: 'POST',
-      body: JSON.stringify(tripData),
-    });
+    const url = `${API_BASE_URL}/trips/create-for-bucket-list/`;
+    
+    // If tripData has an image file, use FormData
+    if (tripData.image instanceof File) {
+      const formData = new FormData();
+      formData.append('name', tripData.name);
+      formData.append('location', tripData.location);
+      if (tripData.date) {
+        formData.append('date', tripData.date);
+      }
+      formData.append('image', tripData.image);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create trip');
+      }
+      
+      return await response.json();
+    } else {
+      // Use JSON for requests without images
+      return await apiRequest('/trips/create-for-bucket-list/', {
+        method: 'POST',
+        body: JSON.stringify(tripData),
+      });
+    }
   } catch (error) {
     console.error('Error creating trip for bucket list:', error);
     throw error;
@@ -218,12 +245,140 @@ export async function createTripForBucketList(tripData) {
  */
 export async function createTripForMyTrips(tripData) {
   try {
-    return await apiRequest('/trips/create-for-my-trips/', {
-      method: 'POST',
-      body: JSON.stringify(tripData),
-    });
+    const url = `${API_BASE_URL}/trips/create-for-my-trips/`;
+    
+    // If tripData has an image file, use FormData
+    if (tripData.image instanceof File) {
+      const formData = new FormData();
+      formData.append('name', tripData.name);
+      formData.append('location', tripData.location);
+      if (tripData.date) {
+        formData.append('date', tripData.date);
+      }
+      formData.append('image', tripData.image);
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create trip');
+      }
+      
+      return await response.json();
+    } else {
+      // Use JSON for requests without images
+      return await apiRequest('/trips/create-for-my-trips/', {
+        method: 'POST',
+        body: JSON.stringify(tripData),
+      });
+    }
   } catch (error) {
     console.error('Error creating trip for my trips:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get trip details
+ */
+export async function getTrip(tripId) {
+  try {
+    return await apiRequest(`/trips/${tripId}/`);
+  } catch (error) {
+    console.error('Error fetching trip:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a plan for a trip
+ */
+export async function createPlan(tripId, planData) {
+  try {
+    return await apiRequest(`/trips/${tripId}/plans/`, {
+      method: 'POST',
+      body: JSON.stringify(planData),
+    });
+  } catch (error) {
+    console.error('Error creating plan:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a plan
+ */
+export async function deletePlan(planId) {
+  try {
+    return await apiRequest(`/plans/${planId}/`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    console.error('Error deleting plan:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a BNB for a trip
+ */
+export async function createBNB(tripId, bnbData) {
+  try {
+    return await apiRequest(`/trips/${tripId}/bnb/`, {
+      method: 'POST',
+      body: JSON.stringify(bnbData),
+    });
+  } catch (error) {
+    console.error('Error creating BNB:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update a BNB
+ */
+export async function updateBNB(bnbId, bnbData) {
+  try {
+    return await apiRequest(`/bnb/${bnbId}/`, {
+      method: 'PATCH',
+      body: JSON.stringify(bnbData),
+    });
+  } catch (error) {
+    console.error('Error updating BNB:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a rating for a BNB
+ */
+export async function createRating(bnbId, value) {
+  try {
+    return await apiRequest(`/bnb/${bnbId}/ratings/`, {
+      method: 'POST',
+      body: JSON.stringify({ value }),
+    });
+  } catch (error) {
+    console.error('Error creating rating:', error);
+    throw error;
+  }
+}
+
+/**
+ * Create a review for a BNB
+ */
+export async function createReview(bnbId, reviewData) {
+  try {
+    return await apiRequest(`/bnb/${bnbId}/reviews/`, {
+      method: 'POST',
+      body: JSON.stringify(reviewData),
+    });
+  } catch (error) {
+    console.error('Error creating review:', error);
     throw error;
   }
 }

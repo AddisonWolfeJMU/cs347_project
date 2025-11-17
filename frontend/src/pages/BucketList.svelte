@@ -8,15 +8,25 @@
   let loading = true
   let error = null
   
-  // Form state
+  // Multi-step form state
   let showAddForm = false
+  let currentStep = 1
+  const totalSteps = 3
   let formData = {
     name: '',
     location: '',
-    date: ''
+    date: '',
+    image: null,
+    notes: ''
   }
   let formError = null
   let formLoading = false
+  let imagePreview = null
+  let stepErrors = {
+    step1: {},
+    step2: {},
+    step3: {}
+  }
   
   // Load bucket list data from backend
   async function loadBucketList() {
@@ -26,16 +36,27 @@
       const response = await getBucketList()
       if (response.success && response.trips) {
         // Transform backend data to match UI structure
-        bucketListItems = response.trips.map(trip => ({
-          id: trip.id,
-          title: trip.name || trip.location,
-          description: trip.location || `Trip to ${trip.name || 'Unknown'}`,
-          category: "adventure", // Default category since backend doesn't have this
-          priority: "medium", // Default priority
-      completed: false,
-          dateAdded: trip.date || new Date().toISOString().split('T')[0],
-          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" // Default travel image
-        }))
+        bucketListItems = response.trips.map(trip => {
+          // Handle image URL - use fallback if image is null, empty, or invalid
+          let imageUrl = trip.image
+          
+          // Debug: log the image URL to see what we're getting
+          console.log(`Trip ${trip.id} image URL:`, imageUrl)
+          
+          if (!imageUrl || imageUrl === 'null' || imageUrl === 'undefined' || imageUrl.trim() === '') {
+            imageUrl = "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400"
+          }
+          
+          return {
+            id: trip.id,
+            title: trip.name || trip.location,
+            description: trip.location || `Trip to ${trip.name || 'Unknown'}`,
+            category: "adventure", // Default category since backend doesn't have this
+            completed: false,
+            dateAdded: trip.date || new Date().toISOString().split('T')[0],
+            image: imageUrl
+          }
+        })
       }
     } catch (err) {
       console.error('Error loading bucket list:', err)
@@ -50,13 +71,82 @@
     loadBucketList()
   })
   
+  // Handle image selection
+  function handleImageSelect(event) {
+    const file = event.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        formError = 'Please select an image file'
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        formError = 'Image size must be less than 5MB'
+        return
+      }
+      
+      formData.image = file
+      formError = null
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        imagePreview = e.target.result
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  
+  function removeImage() {
+    formData.image = null
+    imagePreview = null
+  }
+  
+  // Multi-step form navigation
+  function validateStep(step) {
+    stepErrors[`step${step}`] = {}
+    let isValid = true
+    
+    if (step === 1) {
+      if (!formData.name || formData.name.trim() === '') {
+        stepErrors.step1.name = 'Trip name is required'
+        isValid = false
+      }
+      if (!formData.location || formData.location.trim() === '') {
+        stepErrors.step1.location = 'Location is required'
+        isValid = false
+      }
+    }
+    
+    return isValid
+  }
+  
+  function nextStep() {
+    if (validateStep(currentStep)) {
+      if (currentStep < totalSteps) {
+        currentStep++
+        formError = null
+      }
+    }
+  }
+  
+  function previousStep() {
+    if (currentStep > 1) {
+      currentStep--
+      formError = null
+    }
+  }
+  
   // Handle form submission
   async function handleAddTrip() {
     formError = null
     formLoading = true
     
-    if (!formData.name || !formData.location) {
-      formError = 'Name and location are required'
+    // Final validation
+    if (!validateStep(1)) {
+      currentStep = 1
       formLoading = false
       return
     }
@@ -65,12 +155,15 @@
       const response = await createTripForBucketList({
         name: formData.name,
         location: formData.location,
-        date: formData.date || null
+        date: formData.date || null,
+        image: formData.image
       })
       
       if (response.success) {
         // Reset form
-        formData = { name: '', location: '', date: '' }
+        formData = { name: '', location: '', date: '', image: null, notes: '' }
+        imagePreview = null
+        currentStep = 1
         showAddForm = false
         // Reload bucket list
         await loadBucketList()
@@ -84,14 +177,20 @@
   
   function openAddForm() {
     showAddForm = true
+    currentStep = 1
     formError = null
-    formData = { name: '', location: '', date: '' }
+    formData = { name: '', location: '', date: '', image: null, notes: '' }
+    imagePreview = null
+    stepErrors = { step1: {}, step2: {}, step3: {} }
   }
   
   function closeAddForm() {
     showAddForm = false
+    currentStep = 1
     formError = null
-    formData = { name: '', location: '', date: '' }
+    formData = { name: '', location: '', date: '', image: null, notes: '' }
+    imagePreview = null
+    stepErrors = { step1: {}, step2: {}, step3: {} }
   }
   
   let selectedFilter = 'all'
@@ -111,7 +210,6 @@
   
   const sortOptions = [
     { name: "Date Added", value: "date-added" },
-    { name: "Priority", value: "priority" },
     { name: "Title", value: "title" },
     { name: "Category", value: "category" }
   ]
@@ -129,9 +227,7 @@
   
   $: sortedItems = [...filteredItems].sort((a, b) => {
     switch (selectedSort) {
-      case 'priority':
-        const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 }
-        return priorityOrder[b.priority] - priorityOrder[a.priority]
+
       case 'title':
         return a.title.localeCompare(b.title)
       case 'category':
@@ -163,14 +259,6 @@
     }
   }
   
-  function getPriorityColor(priority) {
-    switch (priority) {
-      case 'high': return '#ef4444'
-      case 'medium': return '#f59e0b'
-      case 'low': return '#10b981'
-      default: return '#6b7280'
-    }
-  }
   
   let previousFilterKey = ''
   
@@ -289,20 +377,9 @@
       {:else}
         <div class="items-grid">
           {#each paginatedItems as item}
-            <div class="bucket-item {item.completed ? 'completed' : ''}">
-              <div class="item-image" style={`background-image: url('${item.image}')`}>
-                <div class="item-overlay">
-                  <button 
-                    class="complete-btn {item.completed ? 'completed' : ''}"
-                    on:click={() => toggleComplete(item)}
-                    aria-label={item.completed ? 'Mark as incomplete' : 'Mark as complete'}
-                  >
-                    {item.completed ? '✓' : '○'}
-                  </button>
-                </div>
-                <div class="priority-badge" style={`background-color: ${getPriorityColor(item.priority)}`}>
-                  {item.priority}
-                </div>
+            <div class="bucket-item {item.completed ? 'completed' : ''}" on:click={() => window.location.hash = `#trip/${item.id}`} style="cursor: pointer;">
+              <div class="item-image" style={`background-image: url('${item.image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400"}')`}>
+                
               </div>
               <div class="item-content">
                 <div class="item-header">
@@ -381,13 +458,35 @@
   </section>
 </main>
 
-<!-- Add Trip Modal -->
+<!-- Multi-Step Add Trip Modal -->
 {#if showAddForm}
   <div class="modal-overlay" on:click={closeAddForm}>
-    <div class="modal-content" on:click|stopPropagation>
+    <div class="modal-content multi-step-form" on:click|stopPropagation>
       <div class="modal-header">
         <h2>Add New Trip to Bucket List</h2>
         <button class="modal-close" on:click={closeAddForm}>×</button>
+      </div>
+      
+      <!-- Progress Indicator -->
+      <div class="step-indicator">
+        {#each Array(totalSteps) as _, i}
+          {@const stepNum = i + 1}
+          <div class="step-item {currentStep >= stepNum ? 'active' : ''} {currentStep > stepNum ? 'completed' : ''}">
+            <div class="step-number">
+              {#if currentStep > stepNum}
+                ✓
+              {:else}
+                {stepNum}
+              {/if}
+            </div>
+            <div class="step-label">
+              {stepNum === 1 ? 'Basic Info' : stepNum === 2 ? 'Details' : 'Review'}
+            </div>
+          </div>
+          {#if stepNum < totalSteps}
+            <div class="step-connector {currentStep > stepNum ? 'completed' : ''}"></div>
+          {/if}
+        {/each}
       </div>
       
       <form on:submit|preventDefault={handleAddTrip} class="trip-form">
@@ -395,47 +494,168 @@
           <div class="form-error">{formError}</div>
         {/if}
         
-        <div class="form-group">
-          <label for="trip-name">Trip Name *</label>
-          <input
-            id="trip-name"
-            type="text"
-            bind:value={formData.name}
-            placeholder="e.g., Visit Paris"
-            required
-            disabled={formLoading}
-          />
-        </div>
+        <!-- Step 1: Basic Information -->
+        {#if currentStep === 1}
+          <div class="step-content">
+            <h3 class="step-title">Basic Information</h3>
+            <p class="step-description">Tell us about your dream destination</p>
+            
+            <div class="form-group">
+              <label for="trip-name">Trip Name *</label>
+              <input
+                id="trip-name"
+                type="text"
+                bind:value={formData.name}
+                placeholder="e.g., Visit Paris"
+                class={stepErrors.step1.name ? 'error' : ''}
+                disabled={formLoading}
+              />
+              {#if stepErrors.step1.name}
+                <span class="field-error">{stepErrors.step1.name}</span>
+              {/if}
+            </div>
+            
+            <div class="form-group">
+              <label for="trip-location">Location *</label>
+              <input
+                id="trip-location"
+                type="text"
+                bind:value={formData.location}
+                placeholder="e.g., Paris, France"
+                class={stepErrors.step1.location ? 'error' : ''}
+                disabled={formLoading}
+              />
+              {#if stepErrors.step1.location}
+                <span class="field-error">{stepErrors.step1.location}</span>
+              {/if}
+            </div>
+            
+            <div class="form-group">
+              <label for="trip-date">Planned Date (Optional)</label>
+              <input
+                id="trip-date"
+                type="date"
+                bind:value={formData.date}
+                disabled={formLoading}
+              />
+              <small class="field-hint">When do you plan to visit?</small>
+            </div>
+          </div>
+        {/if}
         
-        <div class="form-group">
-          <label for="trip-location">Location *</label>
-          <input
-            id="trip-location"
-            type="text"
-            bind:value={formData.location}
-            placeholder="e.g., Paris, France"
-            required
-            disabled={formLoading}
-          />
-        </div>
+        <!-- Step 2: Visual & Details -->
+        {#if currentStep === 2}
+          <div class="step-content">
+            <h3 class="step-title">Visual & Details</h3>
+            <p class="step-description">Add a photo and any additional notes</p>
+            
+            <div class="form-group">
+              <label for="trip-image">Cover Photo (Optional)</label>
+              {#if imagePreview}
+                <div class="image-preview-container">
+                  <img src={imagePreview} alt="Preview" class="image-preview" />
+                  <button type="button" class="remove-image-btn" on:click={removeImage}>Remove</button>
+                </div>
+              {:else}
+                <div class="file-upload-area">
+                  <input
+                    id="trip-image"
+                    type="file"
+                    accept="image/*"
+                    on:change={handleImageSelect}
+                    disabled={formLoading}
+                    class="file-input-hidden"
+                  />
+                  <label for="trip-image" class="file-upload-label">
+                    <span class="upload-icon">📷</span>
+                    <span class="upload-text">Click to upload or drag and drop</span>
+                    <span class="upload-hint">Max size: 5MB. Supported formats: JPG, PNG, GIF</span>
+                  </label>
+                </div>
+              {/if}
+            </div>
+            
+            <div class="form-group">
+              <label for="trip-notes">Notes (Optional)</label>
+              <textarea
+                id="trip-notes"
+                bind:value={formData.notes}
+                placeholder="Add any notes, ideas, or inspiration for this trip..."
+                rows="4"
+                disabled={formLoading}
+                class="form-textarea"
+              ></textarea>
+              <small class="field-hint">What makes this trip special to you?</small>
+            </div>
+          </div>
+        {/if}
         
-        <div class="form-group">
-          <label for="trip-date">Date (Optional)</label>
-          <input
-            id="trip-date"
-            type="date"
-            bind:value={formData.date}
-            disabled={formLoading}
-          />
-        </div>
+        <!-- Step 3: Review & Submit -->
+        {#if currentStep === 3}
+          <div class="step-content">
+            <h3 class="step-title">Review Your Trip</h3>
+            <p class="step-description">Please review your information before submitting</p>
+            
+            <div class="review-summary">
+              <div class="review-item">
+                <span class="review-label">Trip Name:</span>
+                <span class="review-value">{formData.name || 'Not set'}</span>
+              </div>
+              <div class="review-item">
+                <span class="review-label">Location:</span>
+                <span class="review-value">{formData.location || 'Not set'}</span>
+              </div>
+              <div class="review-item">
+                <span class="review-label">Planned Date:</span>
+                <span class="review-value">
+                  {formData.date ? new Date(formData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Not set'}
+                </span>
+              </div>
+              <div class="review-item">
+                <span class="review-label">Cover Photo:</span>
+                <span class="review-value">{formData.image ? '✓ Uploaded' : 'Not uploaded'}</span>
+              </div>
+              {#if formData.notes}
+                <div class="review-item">
+                  <span class="review-label">Notes:</span>
+                  <span class="review-value notes-value">{formData.notes}</span>
+                </div>
+              {/if}
+            </div>
+            
+            {#if imagePreview}
+              <div class="review-image">
+                <img src={imagePreview} alt="Trip preview" />
+              </div>
+            {/if}
+          </div>
+        {/if}
         
+        <!-- Navigation Buttons -->
         <div class="form-actions">
-          <button type="button" class="btn-cancel" on:click={closeAddForm} disabled={formLoading}>
-            Cancel
-          </button>
-          <button type="submit" class="btn-submit" disabled={formLoading}>
-            {formLoading ? 'Adding...' : 'Add to Bucket List'}
-          </button>
+          <div class="form-actions-left">
+            {#if currentStep > 1}
+              <button type="button" class="btn-back" on:click={previousStep} disabled={formLoading}>
+                ← Previous
+              </button>
+            {:else}
+              <button type="button" class="btn-cancel" on:click={closeAddForm} disabled={formLoading}>
+                Cancel
+              </button>
+            {/if}
+          </div>
+          
+          <div class="form-actions-right">
+            {#if currentStep < totalSteps}
+              <button type="button" class="btn-next" on:click={nextStep} disabled={formLoading}>
+                Next →
+              </button>
+            {:else}
+              <button type="submit" class="btn-submit" disabled={formLoading}>
+                {formLoading ? 'Adding...' : 'Add to Bucket List'}
+              </button>
+            {/if}
+          </div>
         </div>
       </form>
     </div>
@@ -587,6 +807,392 @@
   .btn-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+  
+  .file-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  
+  .file-input:hover:not(:disabled) {
+    border-color: #6366f1;
+  }
+  
+  .file-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+  
+  .file-hint {
+    display: block;
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .image-preview-container {
+    position: relative;
+    margin-top: 8px;
+  }
+  
+  .image-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .remove-image-btn:hover {
+    background: rgba(220, 38, 38, 1);
+  }
+  
+  /* Multi-Step Form Styles */
+  .multi-step-form {
+    max-width: 600px;
+  }
+  
+  .step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+  }
+  
+  .step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+  }
+  
+  .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e5e7eb;
+    color: #6b7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .step-item.active .step-number {
+    background: #6366f1;
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  }
+  
+  .step-item.completed .step-number {
+    background: #10b981;
+    color: white;
+  }
+  
+  .step-label {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .step-item.active .step-label {
+    color: #6366f1;
+  }
+  
+  .step-item.completed .step-label {
+    color: #10b981;
+  }
+  
+  .step-connector {
+    width: 60px;
+    height: 2px;
+    background: #e5e7eb;
+    margin: 0 10px;
+    transition: background 0.3s ease;
+  }
+  
+  .step-connector.completed {
+    background: #10b981;
+  }
+  
+  .step-content {
+    padding: 24px;
+    min-height: 300px;
+  }
+  
+  .step-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+  }
+  
+  .step-description {
+    color: #6b7280;
+    margin: 0 0 32px 0;
+    font-size: 14px;
+  }
+  
+  .form-group textarea.form-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+  }
+  
+  .form-group textarea.form-textarea:focus {
+    outline: none;
+    border-color: #6366f1;
+  }
+  
+  .form-group textarea.form-textarea:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+  
+  .field-error {
+    display: block;
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  
+  .field-hint {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  
+  .form-group input.error {
+    border-color: #dc2626;
+  }
+  
+  .file-upload-area {
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .file-upload-area:hover {
+    border-color: #6366f1;
+    background: #f9fafb;
+  }
+  
+  .file-input-hidden {
+    display: none;
+  }
+  
+  .file-upload-label {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+  
+  .upload-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+  
+  .upload-text {
+    font-weight: 600;
+    color: #374151;
+    font-size: 16px;
+  }
+  
+  .upload-hint {
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .review-summary {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  
+  .review-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  
+  .review-item:last-child {
+    border-bottom: none;
+  }
+  
+  .review-label {
+    font-weight: 600;
+    color: #374151;
+    min-width: 120px;
+  }
+  
+  .review-value {
+    color: #6b7280;
+    text-align: right;
+    flex: 1;
+  }
+  
+  .review-value.notes-value {
+    text-align: left;
+    font-style: italic;
+    white-space: pre-wrap;
+  }
+  
+  .review-image {
+    margin-top: 24px;
+    text-align: center;
+  }
+  
+  .review-image img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-top: 1px solid #e5e7eb;
+    gap: 12px;
+  }
+  
+  .form-actions-left,
+  .form-actions-right {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .btn-back {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid #e5e7eb;
+    background: white;
+    color: #374151;
+  }
+  
+  .btn-back:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #6366f1;
+    color: #6366f1;
+  }
+  
+  .btn-next {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    background: #6366f1;
+    color: white;
+  }
+  
+  .btn-next:hover:not(:disabled) {
+    background: #4f46e5;
+    transform: translateX(2px);
+  }
+  
+  .btn-back:disabled,
+  .btn-next:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* Responsive adjustments for multi-step form */
+  @media (max-width: 768px) {
+    .multi-step-form {
+      max-width: 95%;
+    }
+    
+    .step-indicator {
+      padding: 16px;
+    }
+    
+    .step-number {
+      width: 32px;
+      height: 32px;
+      font-size: 14px;
+    }
+    
+    .step-label {
+      font-size: 10px;
+    }
+    
+    .step-connector {
+      width: 30px;
+      margin: 0 5px;
+    }
+    
+    .step-content {
+      padding: 16px;
+      min-height: 250px;
+    }
+    
+    .form-actions {
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .form-actions-left,
+    .form-actions-right {
+      width: 100%;
+    }
+    
+    .btn-back,
+    .btn-next,
+    .btn-cancel,
+    .btn-submit {
+      width: 100%;
+    }
   }
 </style>
 

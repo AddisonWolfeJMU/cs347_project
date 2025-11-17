@@ -5,6 +5,7 @@
   import MyTrips from './pages/MyTrips.svelte'
   import Profile from './pages/Profile.svelte'
   import Destination from './pages/Destination.svelte'
+  import TripDetail from './pages/TripDetail.svelte'
   import Help from './pages/Help.svelte'
   import Login from './pages/Login.svelte'
   import Register from './pages/Register.svelte'
@@ -24,6 +25,8 @@
     
     if (hash.startsWith('destination/')) {
       newRoute = 'destination'
+    } else if (hash.startsWith('trip/')) {
+      newRoute = 'trip'
     } else {
       newRoute = hash || 'home'
     }
@@ -214,6 +217,8 @@
   <Profile />
 {:else if route === 'destination'}
   <Destination />
+{:else if route === 'trip'}
+  <TripDetail />
 {:else if route === 'help'}
   <Help />
 {:else if route === 'login'}

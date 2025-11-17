@@ -1,2 +1,33 @@
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
+
+# Media files - don't commit uploaded images
+media/
+pinpoint_media/
+
+# Database
+*.db
+*.sqlite3
+db.sqlite3
+
+# Environment variables
+.env
+*.env
+passwords.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Django
+*.log
+local_settings.py

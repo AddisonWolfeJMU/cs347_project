@@ -13,10 +13,12 @@
   let formData = {
     name: '',
     location: '',
-    date: ''
+    date: '',
+    image: null
   }
   let formError = null
   let formLoading = false
+  let imagePreview = null
   
   // Load trips data from backend
   async function loadTrips() {
@@ -35,7 +37,7 @@
           completed: true, // MyTrips are completed trips
           dateAdded: trip.date || new Date().toISOString().split('T')[0],
           completedDate: trip.date || new Date().toISOString().split('T')[0],
-          image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" // Default travel image
+          image: trip.image || "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400" // Use uploaded image or default
         }))
       }
     } catch (err) {
@@ -50,6 +52,39 @@
   onMount(() => {
     loadTrips()
   })
+  
+  // Handle image selection
+  function handleImageSelect(event) {
+    const file = event.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        formError = 'Please select an image file'
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        formError = 'Image size must be less than 5MB'
+        return
+      }
+      
+      formData.image = file
+      formError = null
+      
+      // Create preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        imagePreview = e.target.result
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+  
+  function removeImage() {
+    formData.image = null
+    imagePreview = null
+  }
   
   // Handle form submission
   async function handleAddTrip() {
@@ -66,12 +101,14 @@
       const response = await createTripForMyTrips({
         name: formData.name,
         location: formData.location,
-        date: formData.date || null
+        date: formData.date || null,
+        image: formData.image
       })
       
       if (response.success) {
         // Reset form
-        formData = { name: '', location: '', date: '' }
+        formData = { name: '', location: '', date: '', image: null }
+        imagePreview = null
         showAddForm = false
         // Reload trips
         await loadTrips()
@@ -86,13 +123,15 @@
   function openAddForm() {
     showAddForm = true
     formError = null
-    formData = { name: '', location: '', date: '' }
+    formData = { name: '', location: '', date: '', image: null }
+    imagePreview = null
   }
   
   function closeAddForm() {
     showAddForm = false
     formError = null
-    formData = { name: '', location: '', date: '' }
+    formData = { name: '', location: '', date: '', image: null }
+    imagePreview = null
   }
   
   // Filter to show only completed trips (all trips in MyTrips are completed)
@@ -234,7 +273,7 @@
       {:else}
         <div class="items-grid">
           {#each sortedTrips as trip}
-            <div class="bucket-item completed">
+            <div class="bucket-item completed" on:click={() => window.location.hash = `#trip/${trip.id}`} style="cursor: pointer;" role="button" tabindex="0">
               <div class="item-image" style={`background-image: url('${trip.image}')`}>
                 <div class="priority-badge" style={`background-color: ${getPriorityColor(trip.priority)}`}>
                   {trip.priority}
@@ -321,6 +360,26 @@
             bind:value={formData.date}
             disabled={formLoading}
           />
+        </div>
+        
+        <div class="form-group">
+          <label for="trip-image">Cover Photo (Optional)</label>
+          {#if imagePreview}
+            <div class="image-preview-container">
+              <img src={imagePreview} alt="Preview" class="image-preview" />
+              <button type="button" class="remove-image-btn" on:click={removeImage}>Remove</button>
+            </div>
+          {:else}
+            <input
+              id="trip-image"
+              type="file"
+              accept="image/*"
+              on:change={handleImageSelect}
+              disabled={formLoading}
+              class="file-input"
+            />
+            <small class="file-hint">Max size: 5MB. Supported formats: JPG, PNG, GIF</small>
+          {/if}
         </div>
         
         <div class="form-actions">
@@ -532,5 +591,63 @@
   .btn-submit:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+  
+  .file-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  
+  .file-input:hover:not(:disabled) {
+    border-color: #6366f1;
+  }
+  
+  .file-input:disabled {
+    background: #f3f4f6;
+    cursor: not-allowed;
+  }
+  
+  .file-hint {
+    display: block;
+    margin-top: 8px;
+    color: #6b7280;
+    font-size: 12px;
+  }
+  
+  .image-preview-container {
+    position: relative;
+    margin-top: 8px;
+  }
+  
+  .image-preview {
+    width: 100%;
+    max-height: 200px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .remove-image-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(220, 38, 38, 0.9);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .remove-image-btn:hover {
+    background: rgba(220, 38, 38, 1);
   }
 </style>

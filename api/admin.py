@@ -2,6 +2,7 @@ from django.contrib import admin
 from django import forms
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils.html import format_html
 
 from .models import Rating, Review, BNB, Plan, Trip, BucketList, MyTrips
 
@@ -58,9 +59,17 @@ class BNBInline(admin.StackedInline):
 @admin.register(Trip)
 class TripAdmin(admin.ModelAdmin):
     form = TripAdminForm
-    list_display = ('name', 'location', 'user')
+    list_display = ('name', 'location', 'user', 'image_preview')
     inlines = [PlanInline, BNBInline]
-    fields = ('user', 'name', 'location', 'date', 'assign_to')
+    fields = ('user', 'name', 'location', 'date', 'image', 'image_preview', 'assign_to')
+    readonly_fields = ('image_preview',)
+    
+    def image_preview(self, obj):
+        """Display image preview in admin"""
+        if obj.image:
+            return format_html('<img src="{}" style="max-width: 200px; max-height: 200px;" />', obj.image.url)
+        return "No image"
+    image_preview.short_description = 'Image Preview'
 
     def save_model(self, request, obj, form, change):
         # make sure the trip is tied to the logged-in user if not already set

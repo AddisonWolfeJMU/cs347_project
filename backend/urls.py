@@ -17,9 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import TemplateView
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('', TemplateView.as_view(template_name="index.html")),
+]
+
+# Serve media files in development - always serve media files
+# This ensures images are accessible even if DEBUG is False
+from django.views.static import serve
+from django.urls import re_path
+
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Additional catch-all for media files to ensure they're served
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
