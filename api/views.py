@@ -1039,3 +1039,106 @@ def create_review_view(request, bnb_id):
             "success": False,
             "error": str(e)
         }, status=500)
+
+
+import requests
+import pandas as pd
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from backend.ml.pipeline import predict_comfort
+from backend.ml.weather_utils import geocode_city
+@api_view(["POST"])
+def comfort_by_city(request):
+    try:
+        city = request.data.get("city")
+        start = request.data.get("start_date")
+        end = request.data.get("end_date")
+
+        if not city or not start or not end:
+            return Response({"error": "Missing required fields"}, status=400)
+
+        # -----------------------------
+        # 1. Geocode City -> lat/lon
+        # -----------------------------
+        geo = geocode_city(city)
+        if not geo:
+            return Response({"error": "Geocoding failed"}, status=500)
+
+        lat = float(geo["lat"])
+        lon = float(geo["lon"])
+        # -----------------------------
+        # 2. Build Open-Meteo Forecast URL
+        # -----------------------------
+        url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,"
+            "wind_speed_10m_max,cloudcover_mean"
+            "&hourly=relativehumidity_2m"
+            f"&start_date={start}&end_date={end}&timezone=auto"
+        )
+
+        api_resp = requests.get(url).json()
+
+        if "daily" not in api_resp or "hourly" not in api_resp:
+            return Response({"error": "Weather fetch failed", "raw": api_resp}, status=500)
+
+        daily = api_resp["daily"]
+        hourly = api_resp["hourly"]
+
+        # -----------------------------
+        # 3. Build hourly humidity DataFrame
+        # -----------------------------
+        hourly_df = pd.DataFrame({
+            "time": pd.to_datetime(hourly["time"]),
+            "humidity": hourly["relativehumidity_2m"],
+        })
+
+        results = []
+
+        # -----------------------------
+        # 4. Loop over days and extract features
+        # -----------------------------
+        for i, date in enumerate(daily["time"]):
+            day = pd.to_datetime(date).date()
+
+            # Get hourly humidity for that day
+            mask = hourly_df["time"].dt.date == day
+            day_values = hourly_df.loc[mask, "humidity"]
+
+            # Safe fallback
+            humidity_max = float(day_values.max()) if not day_values.empty else 50.0
+
+            # Build feature row
+            row = {
+                "temp_min": daily["temperature_2m_min"][i],
+                "temp_max": daily["temperature_2m_max"][i],
+                "precipitation": daily["precipitation_sum"][i],
+                "humidity_max": humidity_max,
+                "wind_max": daily["wind_speed_10m_max"][i],
+                "cloudcover": daily["cloudcover_mean"][i],
+                "lat": lat,
+                "lon": lon,
+                "month": pd.to_datetime(date).month,
+            }
+
+            # -----------------------------
+            # 5. Predict comfort index
+            # -----------------------------
+            score = predict_comfort(row)
+
+            results.append({
+                "date": date,
+                "city": city,
+                "comfort_score": float(score),
+                **row,
+            })
+
+        # -----------------------------
+        # 6. Return results
+        # -----------------------------
+        return Response({"results": results}, status=200)
+
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

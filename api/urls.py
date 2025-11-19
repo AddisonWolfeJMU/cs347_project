@@ -5,7 +5,7 @@ from .views import (
     create_trip_view, add_to_bucket_list_view, add_to_my_trips_view,
     create_trip_for_bucket_list_view, create_trip_for_my_trips_view,
     get_trip_view, create_plan_view, delete_plan_view, create_bnb_view,
-    update_bnb_view, create_rating_view, create_review_view
+    update_bnb_view, create_rating_view, create_review_view, comfort_by_city
 )
 
 urlpatterns = [
@@ -30,4 +30,5 @@ urlpatterns = [
     path("bnb/<int:bnb_id>/", update_bnb_view, name="update_bnb"),
     path("bnb/<int:bnb_id>/ratings/", create_rating_view, name="create_rating"),
     path("bnb/<int:bnb_id>/reviews/", create_review_view, name="create_review"),
+    path("comfort-by-city/", comfort_by_city),
 ]
