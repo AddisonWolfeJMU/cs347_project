@@ -9,6 +9,7 @@
   import Help from './pages/Help.svelte'
   import Login from './pages/Login.svelte'
   import Register from './pages/Register.svelte'
+  import NotFound from './pages/NotFound.svelte'
   import { checkAuth } from './lib/api.js'
   
   let query = ''
@@ -18,6 +19,9 @@
   let user = null
   let isAuthenticated = false
   let isLoadingAuth = true
+  
+  // Define valid routes
+  const validRoutes = ['home', 'bucket', 'trips', 'profile', 'destination', 'trip', 'help', 'login', 'register']
   
   function setRouteFromHash() {
     const hash = (location.hash || '#home').replace('#', '')
@@ -29,6 +33,11 @@
       newRoute = 'trip'
     } else {
       newRoute = hash || 'home'
+    }
+    
+    // Check if route is valid, otherwise set to 404
+    if (!validRoutes.includes(newRoute)) {
+      newRoute = '404'
     }
     
     route = newRoute
@@ -225,4 +234,8 @@
   <Login />
 {:else if route === 'register'}
   <Register />
+{:else if route === '404'}
+  <NotFound />
+{:else}
+  <NotFound />
 {/if}

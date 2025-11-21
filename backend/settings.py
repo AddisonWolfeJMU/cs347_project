@@ -201,9 +201,10 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # Session configuration for cross-origin requests
-# For localhost development, we'll use 'Lax' which should work
-# If this doesn't work, try setting both frontend and backend to use the same origin (localhost or 127.0.0.1)
-SESSION_COOKIE_SAMESITE = 'Lax'
+# IMPORTANT: Modern browsers (Chrome 80+) require Secure=True when SameSite=None
+# For localhost, we'll use 'Lax' which works for same-site requests
+# If frontend and backend are on different origins, ensure they use the same hostname (both localhost or both 127.0.0.1)
+SESSION_COOKIE_SAMESITE = 'Lax'  # Use Lax for localhost (works for same-site)
 SESSION_COOKIE_HTTPONLY = True  
 SESSION_COOKIE_SECURE = False  # Must be False for localhost (no HTTPS)
 SESSION_COOKIE_AGE = 1209600  # 2 weeks (14 days)

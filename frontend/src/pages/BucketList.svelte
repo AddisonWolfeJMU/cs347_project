@@ -69,6 +69,19 @@
   // Load data when component mounts
   onMount(() => {
     loadBucketList()
+    
+    // Close export menu when clicking outside
+    if (typeof window !== 'undefined') {
+      const handleClickOutside = (event) => {
+        if (showExportMenu && !event.target.closest('.export-container')) {
+          closeExportMenu()
+        }
+      }
+      window.addEventListener('click', handleClickOutside)
+      return () => {
+        window.removeEventListener('click', handleClickOutside)
+      }
+    }
   })
   
   // Handle image selection
@@ -77,7 +90,7 @@
     if (file) {
       // Validate file type
       if (!file.type.startsWith('image/')) {
-        formError = 'Please select an image file'
+        formError = 'Please select an image file (png, jpg or gif)'
         return
       }
       
@@ -285,6 +298,81 @@
     }
     previousFilterKey = filterKey
   }
+
+  // Export functions
+  function exportToJSON() {
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      exportFormat: 'JSON',
+      totalItems: bucketListItems.length,
+      items: bucketListItems.map(item => ({
+        id: item.id,
+        name: item.title, // Backend field name
+        location: item.description, // Backend field name
+        title: item.title, // UI field name
+        description: item.description, // UI field name
+        category: item.category,
+        completed: item.completed,
+        dateAdded: item.dateAdded,
+        date: item.dateAdded, // Backend field name
+        completedDate: item.completedDate || null,
+        imageUrl: item.image
+      }))
+    }
+    
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bucket-list-export-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  function exportToCSV() {
+    // CSV header
+    const headers = ['ID', 'Name/Title', 'Location/Description', 'Category', 'Completed', 'Date Added', 'Completed Date', 'Image URL']
+    const rows = bucketListItems.map(item => [
+      item.id,
+      `"${(item.title || '').replace(/"/g, '""')}"`,
+      `"${(item.description || '').replace(/"/g, '""')}"`,
+      item.category || '',
+      item.completed ? 'Yes' : 'No',
+      item.dateAdded || '',
+      item.completedDate || '',
+      item.image || ''
+    ])
+    
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+    
+    // Add BOM for Excel compatibility
+    const BOM = '\uFEFF'
+    const dataBlob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bucket-list-export-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  let showExportMenu = false
+
+  function toggleExportMenu() {
+    showExportMenu = !showExportMenu
+  }
+
+  function closeExportMenu() {
+    showExportMenu = false
+  }
 </script>
 
 <main class="bucket-list-page">
@@ -329,6 +417,24 @@
               <option value={option.value}>{option.name}</option>
             {/each}
           </select>
+          <div class="export-container">
+            <button class="export-btn" on:click={toggleExportMenu} disabled={bucketListItems.length === 0}>
+              <span class="export-icon">📥</span>
+              <span>Export</span>
+            </button>
+            {#if showExportMenu}
+              <div class="export-menu" on:click|stopPropagation>
+                <button class="export-option" on:click={() => { exportToJSON(); closeExportMenu(); }}>
+                  <span class="export-option-icon">📄</span>
+                  <span>Export as JSON</span>
+                </button>
+                <button class="export-option" on:click={() => { exportToCSV(); closeExportMenu(); }}>
+                  <span class="export-option-icon">📊</span>
+                  <span>Export as CSV</span>
+                </button>
+              </div>
+            {/if}
+          </div>
         </div>
       </div>
       
@@ -488,6 +594,7 @@
           {/if}
         {/each}
       </div>
+
       
       <form on:submit|preventDefault={handleAddTrip} class="trip-form">
         {#if formError}
@@ -531,7 +638,7 @@
             </div>
             
             <div class="form-group">
-              <label for="trip-date">Planned Date (Optional)</label>
+              <label for="trip-date">Planned Date</label>
               <input
                 id="trip-date"
                 type="date"

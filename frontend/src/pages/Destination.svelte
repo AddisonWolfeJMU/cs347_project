@@ -1,9 +1,26 @@
 <script>
   import { onMount } from 'svelte'
   import '../styles/destination.css'
+  import { getCurrentWeather } from '../lib/api.js'
   
   let destination = null
   let loading = true
+  let currentWeather = null
+  let weatherLoading = false
+  let weatherError = null
+  
+  // Map destination IDs to city names for weather API
+  const destinationToCity = {
+    'new-england': 'Boston',
+    'aspen-colorado': 'Aspen',
+    'vermont': 'Burlington',
+    'bali-indonesia': 'Denpasar',
+    'santorini-greece': 'Santorini',
+    'dubai-uae': 'Dubai',
+    'swiss-alps': 'Zurich',
+    'iceland': 'Reykjavik',
+    'banff-canada': 'Banff'
+  }
   
   // Sample destination data - soon we will get data to come from an API
   const destinations = {
@@ -198,6 +215,43 @@
     }
   }
   
+  // Helper functions for weather
+  function toFahrenheit(celsius) {
+    return Math.round((celsius * 9/5) + 32)
+  }
+  
+  function getWeatherEmoji(temp) {
+    if (temp >= 30) return '🌞'
+    if (temp >= 20) return '☀️'
+    if (temp >= 10) return '🌤️'
+    if (temp > 0) return '⛅'
+    return '❄️'
+  }
+  
+  async function fetchWeather(destinationId) {
+    const cityName = destinationToCity[destinationId]
+    if (!cityName) return
+    
+    weatherLoading = true
+    weatherError = null
+    try {
+      const response = await getCurrentWeather(cityName)
+      // API returns 'temperature' field (in Celsius)
+      const tempC = response.temperature
+      currentWeather = {
+        city: response.city || cityName,
+        temperature_c: tempC,
+        temperature_f: toFahrenheit(tempC),
+        emoji: getWeatherEmoji(tempC)
+      }
+    } catch (error) {
+      console.error(`Error fetching weather for ${cityName}:`, error)
+      weatherError = error.message
+    } finally {
+      weatherLoading = false
+    }
+  }
+  
   onMount(() => {
     // Get destination ID from URL hash
     const hash = window.location.hash
@@ -205,9 +259,12 @@
     
     if (destinationId && destinations[destinationId]) {
       destination = destinations[destinationId]
+      // Fetch weather for this destination
+      fetchWeather(destinationId)
     } else {
       // Default destination if none specified
       destination = destinations['new-england']
+      fetchWeather('new-england')
     }
     
     loading = false
@@ -279,8 +336,27 @@
           <p>{destination.bestTime}</p>
         </div>
         <div class="info-card">
-          <h3>Weather</h3>
-          <p>{destination.weather}</p>
+          <h3>Current Weather</h3>
+          {#if weatherLoading}
+            <div class="weather-loading">
+              <div class="weather-spinner"></div>
+              <p>Loading weather...</p>
+            </div>
+          {:else if weatherError}
+            <p class="weather-error-text">{destination.weather}</p>
+            <p class="weather-unavailable">Current weather unavailable</p>
+          {:else if currentWeather}
+            <div class="current-weather-display">
+              <div class="weather-emoji-large">{currentWeather.emoji}</div>
+              <div class="weather-temp-display">
+                <span class="temp-main">{currentWeather.temperature_f}°F</span>
+                <span class="temp-sub">({currentWeather.temperature_c}°C)</span>
+              </div>
+              <p class="weather-location">{currentWeather.city}</p>
+            </div>
+          {:else}
+            <p>{destination.weather}</p>
+          {/if}
         </div>
       </div>
     </section>

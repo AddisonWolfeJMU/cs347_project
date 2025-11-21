@@ -1,7 +1,22 @@
 // API configuration
 // IMPORTANT: Make sure this matches your frontend origin format!
 // If frontend is on localhost, use localhost. If on 127.0.0.1, use 127.0.0.1
-const API_BASE_URL = import.meta.env.VITE_API_URL;
+// When served from Django (port 8000), use relative paths. Otherwise use full URL.
+const getApiBaseUrl = () => {
+  // Check if we're in a browser environment
+  if (typeof window !== 'undefined') {
+    // If served from Django (port 8000), use relative path to avoid CORS issues
+    const port = window.location.port;
+    if (port === '8000' || window.location.origin.includes(':8000')) {
+      return '/api';
+    }
+  }
+  // For Vite dev server (port 5173) or if env var is set, use full URL
+  // IMPORTANT: Use 'localhost' to match frontend hostname for cookie SameSite='Lax' to work
+  return import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * Make an API request with proper error handling
@@ -379,6 +394,20 @@ export async function createReview(bnbId, reviewData) {
     });
   } catch (error) {
     console.error('Error creating review:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get current weather for a city
+ */
+export async function getCurrentWeather(city) {
+  try {
+    return await apiRequest(`/weather/current/?city=${encodeURIComponent(city)}`, {
+      method: 'GET',
+    });
+  } catch (error) {
+    console.error('Error fetching weather:', error);
     throw error;
   }
 }

@@ -227,7 +227,7 @@ def register_view(request):
             domain=settings.SESSION_COOKIE_DOMAIN,
             secure=settings.SESSION_COOKIE_SECURE,
             httponly=settings.SESSION_COOKIE_HTTPONLY,
-            samesite=settings.SESSION_COOKIE_SAMESITE
+            samesite='Lax'  # Use Lax for localhost compatibility
         )
     
     return response
@@ -280,7 +280,8 @@ def login_view(request):
             max_age = settings.SESSION_COOKIE_AGE
             
             # Set cookie with explicit attributes
-            # Note: Use max_age OR expires, not both
+            # For localhost, use 'Lax' which works when frontend/backend use same hostname
+            # If using different origins, ensure both use same hostname (localhost or 127.0.0.1)
             response.set_cookie(
                 'sessionid',
                 cookie_value,
@@ -289,7 +290,7 @@ def login_view(request):
                 domain=settings.SESSION_COOKIE_DOMAIN,
                 secure=settings.SESSION_COOKIE_SECURE,
                 httponly=settings.SESSION_COOKIE_HTTPONLY,
-                samesite=settings.SESSION_COOKIE_SAMESITE
+                samesite='Lax'  # Use Lax for localhost compatibility
             )
             print(f"Login: Manually set session cookie: {cookie_value[:20]}...")
         
@@ -1048,6 +1049,48 @@ from rest_framework.response import Response
 
 from backend.ml.pipeline import predict_comfort
 from backend.ml.weather_utils import geocode_city
+
+@api_view(["GET"])
+@csrf_exempt
+def current_weather(request):
+    """Get current weather temperature for a city"""
+    try:
+        city = request.GET.get("city")
+        if not city:
+            return Response({"error": "City parameter required"}, status=400)
+        
+        # Geocode city to get lat/lon
+        geo = geocode_city(city)
+        if not geo:
+            return Response({"error": f"Could not find city: {city}"}, status=404)
+        
+        lat = float(geo["lat"])
+        lon = float(geo["lon"])
+        
+        # Get current weather from Open-Meteo
+        url = (
+            "https://api.open-meteo.com/v1/forecast"
+            f"?latitude={lat}&longitude={lon}"
+            "&current=temperature_2m,weather_code"
+            "&timezone=auto"
+        )
+        
+        api_resp = requests.get(url).json()
+        
+        if "current" not in api_resp:
+            return Response({"error": "Weather fetch failed"}, status=500)
+        
+        current = api_resp["current"]
+        
+        return Response({
+            "city": city,
+            "temperature": current.get("temperature_2m"),
+            "weather_code": current.get("weather_code"),
+            "unit": "°C"
+        })
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)
+
 @api_view(["POST"])
 def comfort_by_city(request):
     try:

@@ -248,6 +248,72 @@
   margin: 0;
 }
 
+/* Weather Display Styles */
+.weather-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.weather-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--border);
+  border-top: 3px solid var(--brand);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.current-weather-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.weather-emoji-large {
+  font-size: 3.5rem;
+  margin-bottom: 5px;
+}
+
+.weather-temp-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.temp-main {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.temp-sub {
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.weather-location {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 5px;
+}
+
+.weather-error-text {
+  font-size: 1.1rem;
+  color: var(--muted);
+  margin: 0 0 10px 0;
+}
+
+.weather-unavailable {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+
 /* Booking Section */
 .booking {
   padding: 60px 0;
