@@ -137,23 +137,12 @@
   // Filter to show only completed trips (all trips in MyTrips are completed)
   $: completedTrips = allTrips.filter(trip => trip.completed)
   
-  let selectedFilter = 'all'
   let searchQuery = ''
-  
-  const categories = [
-    { name: "All", emoji: "🌍", color: "#6366f1", value: "all" },
-    { name: "Beaches", emoji: "🏖️", color: "#4FC3F7", value: "beaches" },
-    { name: "Cities", emoji: "🏙️", color: "#FF7043", value: "cities" },
-    { name: "Mountains", emoji: "🏔️", color: "#66BB6A", value: "mountains" },
-    { name: "Adventure", emoji: "🧗‍♀️", color: "#AB47BC", value: "adventure" },
-    { name: "Romantic", emoji: "💕", color: "#F06292", value: "romantic" }
-  ]
-  
+
   $: filteredTrips = completedTrips.filter(trip => {
-    const matchesFilter = selectedFilter === 'all' || trip.category === selectedFilter
     const matchesSearch = trip.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          trip.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesFilter && matchesSearch
+    return matchesSearch
   })
   
   $: sortedTrips = [...filteredTrips].sort((a, b) => {
@@ -185,10 +174,80 @@
   
   // Calculate total travel experiences
   $: totalCompleted = completedTrips.length
-  $: categoryBreakdown = completedTrips.reduce((acc, trip) => {
-    acc[trip.category] = (acc[trip.category] || 0) + 1
-    return acc
-  }, {})
+
+  // Export functions
+  function exportToJSON() {
+    const exportData = {
+      exportDate: new Date().toISOString(),
+      exportFormat: 'JSON',
+      totalItems: allTrips.length,
+      items: allTrips.map(trip => ({
+        id: trip.id,
+        name: trip.title,
+        location: trip.description,
+        category: trip.category,
+        priority: trip.priority,
+        completed: trip.completed,
+        dateAdded: trip.dateAdded,
+        completedDate: trip.completedDate,
+        imageUrl: trip.image
+      }))
+    }
+
+    const dataStr = JSON.stringify(exportData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `my-trips-export-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  function exportToCSV() {
+    // CSV header
+    const headers = ['ID', 'Name/Title', 'Location/Description', 'Category', 'Priority', 'Completed', 'Date Added', 'Completed Date', 'Image URL']
+    const rows = allTrips.map(trip => [
+      trip.id,
+      `"${(trip.title || '').replace(/"/g, '""')}"`,
+      `"${(trip.description || '').replace(/"/g, '""')}"`,
+      trip.category || '',
+      trip.priority || '',
+      trip.completed ? 'Yes' : 'No',
+      trip.dateAdded || '',
+      trip.completedDate || '',
+      trip.image || ''
+    ])
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n')
+
+    // Add BOM for Excel compatibility
+    const BOM = '\uFEFF'
+    const dataBlob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(dataBlob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `my-trips-export-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  let showExportMenu = false
+
+  function toggleExportMenu() {
+    showExportMenu = !showExportMenu
+  }
+
+  function closeExportMenu() {
+    showExportMenu = false
+  }
 </script>
 
 <main class="bucket-list-page">
@@ -203,21 +262,16 @@
             <span class="stat-number">{totalCompleted}</span>
             <span class="stat-label">Trips Completed</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-number">{Object.keys(categoryBreakdown).length}</span>
-            <span class="stat-label">Categories</span>
-          </div>
-          
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Filters and Search -->
+  <!-- Search -->
   <section class="filters-section">
     <div class="container">
       <div class="filters-header">
-        <h2>Filter Your Adventures</h2>
+        <h2>Search Your Adventures</h2>
         <div class="filters-controls">
           <div class="search-box">
             <input 
@@ -228,23 +282,25 @@
             />
             <span class="search-icon">🔍</span>
           </div>
-        </div>
-      </div>
-      
-      <div class="category-filters">
-        {#each categories as category}
-          <button 
-            class="category-btn {selectedFilter === category.value ? 'active' : ''}"
-            style="--category-color: {category.color}"
-            on:click={() => selectedFilter = category.value}
-          >
-            <span class="category-emoji">{category.emoji}</span>
-            <span class="category-name">{category.name}</span>
-            {#if categoryBreakdown[category.value]}
-              <span class="category-count">({categoryBreakdown[category.value]})</span>
+          <div class="export-container">
+            <button class="export-btn" on:click={toggleExportMenu} disabled={allTrips.length === 0}>
+              <span class="export-icon">📥</span>
+              <span>Export</span>
+            </button>
+            {#if showExportMenu}
+              <div class="export-menu" on:click|stopPropagation>
+                <button class="export-option" on:click={() => { exportToJSON(); closeExportMenu(); }}>
+                  <span class="export-option-icon">📄</span>
+                  <span>Export as JSON</span>
+                </button>
+                <button class="export-option" on:click={() => { exportToCSV(); closeExportMenu(); }}>
+                  <span class="export-option-icon">📊</span>
+                  <span>Export as CSV</span>
+                </button>
+              </div>
             {/if}
-          </button>
-        {/each}
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -283,7 +339,6 @@
               <div class="item-content">
                 <div class="item-header">
                   <h3 class="item-title">{trip.title}</h3>
-                  <span class="item-category">{trip.category}</span>
                 </div>
                 <p class="item-description">{trip.description}</p>
                 <div class="item-footer">

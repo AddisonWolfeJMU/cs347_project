@@ -145,18 +145,10 @@ STATICFILES_DIRS = [
 ]
 
 # Media files (user uploads)
-# Store media files outside the project folder to avoid cluttering the repo
+# Store uploads inside the project in a dedicated `media/` folder so they are
+# available wherever the Django project is deployed (and from any device).
 MEDIA_URL = '/media/'
-# Option 1: Store in user's Documents folder (recommended for development)
-# Uncomment the line below and adjust the path as needed
-# MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'Documents', 'pinpoint_media')
-
-# Option 2: Store in a dedicated folder on OneDrive (since you're using OneDrive)
-# Uncomment and adjust if you prefer this location
-MEDIA_ROOT = os.path.join(os.path.expanduser('~'), 'OneDrive', 'Desktop', 'cs347', 'pinpoint_media')
-
-# Option 3: Keep in project folder (current - comment out if using options above)
-# MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STORAGES = {
     "default": {

@@ -310,6 +310,49 @@ export async function getTrip(tripId) {
 }
 
 /**
+ * Update a trip
+ */
+export async function updateTrip(tripId, tripData) {
+  try {
+    return await apiRequest(`/trips/${tripId}/update/`, {
+      method: 'PATCH',
+      body: JSON.stringify(tripData),
+    });
+  } catch (error) {
+    console.error('Error updating trip:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a trip
+ */
+export async function deleteTrip(tripId) {
+  try {
+    return await apiRequest(`/trips/${tripId}/delete/`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    console.error('Error deleting trip:', error);
+    throw error;
+  }
+}
+
+/**
+ * Mark a trip as completed (move to My Trips and remove from Bucket List)
+ */
+export async function completeTrip(tripId) {
+  try {
+    return await apiRequest(`/trips/${tripId}/complete/`, {
+      method: 'POST',
+    });
+  } catch (error) {
+    console.error('Error completing trip:', error);
+    throw error;
+  }
+}
+
+/**
  * Create a plan for a trip
  */
 export async function createPlan(tripId, planData) {

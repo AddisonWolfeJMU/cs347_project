@@ -495,6 +495,84 @@ def create_trip_view(request):
         }, status=500)
 
 
+### Update Trip ###
+@json_login_required
+@csrf_exempt
+def update_trip_view(request, trip_id):
+    """Update an existing trip's basic details (name, location, date)."""
+    if request.method not in ["PUT", "PATCH", "POST"]:
+        return JsonResponse({"error": "PUT, PATCH, or POST request required."}, status=400)
+
+    try:
+        user = request.user
+        trip = Trip.objects.get(id=trip_id, user=user)
+
+        data = json.loads(request.body or "{}")
+
+        name = data.get("name")
+        location = data.get("location")
+        date_str = data.get("date")
+
+        if name is not None:
+            trip.name = name
+        if location is not None:
+            trip.location = location
+        if date_str is not None:
+            from datetime import datetime
+            if date_str == "":
+                trip.date = None
+            else:
+                try:
+                    trip.date = datetime.strptime(date_str, "%Y-%m-%d").date()
+                except ValueError:
+                    return JsonResponse({"error": "Invalid date format. Use YYYY-MM-DD."}, status=400)
+
+        trip.save()
+
+        return JsonResponse({
+            "success": True,
+            "trip": {
+                "id": trip.id,
+                "name": trip.name,
+                "location": trip.location,
+                "date": trip.date.isoformat() if trip.date else None,
+            }
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Delete Trip ###
+@json_login_required
+@csrf_exempt
+def delete_trip_view(request, trip_id):
+    """Delete a trip and its related data."""
+    if request.method != "DELETE":
+        return JsonResponse({"error": "DELETE request required."}, status=400)
+
+    try:
+        user = request.user
+        trip = Trip.objects.get(id=trip_id, user=user)
+        trip.delete()
+
+        return JsonResponse({
+            "success": True,
+            "message": "Trip deleted successfully."
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
 ### Add Trip to Bucket List ###
 @json_login_required
 @csrf_exempt
@@ -782,6 +860,40 @@ def get_trip_view(request, trip_id):
                 "bnb": bnb_data,
                 "is_completed": is_completed,  # Flag to indicate if trip is completed
             }
+        })
+    except Trip.DoesNotExist:
+        return JsonResponse({"error": "Trip not found."}, status=404)
+    except Exception as e:
+        return JsonResponse({
+            "success": False,
+            "error": str(e)
+        }, status=500)
+
+
+### Mark Trip as Completed (move to My Trips and remove from Bucket List) ###
+@json_login_required
+@csrf_exempt
+def complete_trip_view(request, trip_id):
+    """Mark a trip as completed by moving it to MyTrips and removing it from the bucket list."""
+    if request.method != "POST":
+        return JsonResponse({"error": "POST request required."}, status=400)
+
+    try:
+        user = request.user
+        # Ensure trip belongs to this user
+        trip = Trip.objects.get(id=trip_id, user=user)
+
+        # Add trip to MyTrips
+        my_trips, _ = MyTrips.objects.get_or_create(user=user)
+        my_trips.trips.add(trip)
+
+        # Remove trip from BucketList if present
+        bucket_list, _ = BucketList.objects.get_or_create(user=user)
+        bucket_list.trips.remove(trip)
+
+        return JsonResponse({
+            "success": True,
+            "message": "Trip marked as completed and moved to My Trips.",
         })
     except Trip.DoesNotExist:
         return JsonResponse({"error": "Trip not found."}, status=404)

@@ -206,20 +206,10 @@
     stepErrors = { step1: {}, step2: {}, step3: {} }
   }
   
-  let selectedFilter = 'all'
   let selectedSort = 'date-added'
   let searchQuery = ''
   let currentPage = 1
   const itemsPerPage = 10
-  
-  const categories = [
-    { name: "All", emoji: "🌍", color: "#6366f1", value: "all" },
-    { name: "Beaches", emoji: "🏖️", color: "#4FC3F7", value: "beaches" },
-    { name: "Cities", emoji: "🏙️", color: "#FF7043", value: "cities" },
-    { name: "Mountains", emoji: "🏔️", color: "#66BB6A", value: "mountains" },
-    { name: "Adventure", emoji: "🧗‍♀️", color: "#AB47BC", value: "adventure" },
-    { name: "Romantic", emoji: "💕", color: "#F06292", value: "romantic" }
-  ]
   
   const sortOptions = [
     { name: "Date Added", value: "date-added" },
@@ -228,11 +218,10 @@
   ]
   
   $: filteredItems = bucketListItems.filter(item => {
-    const matchesFilter = selectedFilter === 'all' || item.category === selectedFilter
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          item.description.toLowerCase().includes(searchQuery.toLowerCase())
     const isNotCompleted = !item.completed
-    return matchesFilter && matchesSearch && isNotCompleted
+    return matchesSearch && isNotCompleted
   })
   
   // Handle empty state when loading or error
@@ -253,8 +242,8 @@
   // Pagination logic
   $: totalPages = Math.ceil(sortedItems.length / itemsPerPage)
   
-  // Reset to page 1 when filters or search change
-  $: filterKey = `${selectedFilter}-${selectedSort}-${searchQuery}`
+  // Reset to page 1 when sort or search change
+  $: filterKey = `${selectedSort}-${searchQuery}`
   
   $: startIndex = (currentPage - 1) * itemsPerPage
   $: endIndex = startIndex + itemsPerPage
@@ -387,21 +376,16 @@
             <span class="stat-number">{incompleteCount}</span>
             <span class="stat-label">Active Goals</span>
           </div>
-          <div class="stat-item">
-            <span class="stat-number">{categories.length - 1}</span>
-            <span class="stat-label">Categories</span>
-          </div>
-          
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Filters and Search -->
+  <!-- Search and Sort -->
   <section class="filters-section">
     <div class="container">
       <div class="filters-header">
-        <h2>Filter & Sort</h2>
+        <h2>Search & Sort</h2>
         <div class="filters-controls">
           <div class="search-box">
             <input 
@@ -436,19 +420,6 @@
             {/if}
           </div>
         </div>
-      </div>
-      
-      <div class="category-filters">
-        {#each categories as category}
-          <button 
-            class="category-btn {selectedFilter === category.value ? 'active' : ''}"
-            style="--category-color: {category.color}"
-            on:click={() => selectedFilter = category.value}
-          >
-            <span class="category-emoji">{category.emoji}</span>
-            <span class="category-name">{category.name}</span>
-          </button>
-        {/each}
       </div>
     </div>
   </section>
@@ -490,7 +461,6 @@
               <div class="item-content">
                 <div class="item-header">
                   <h3 class="item-title">{item.title}</h3>
-                  <span class="item-category">{item.category}</span>
                 </div>
                 <p class="item-description">{item.description}</p>
                 <div class="item-footer">

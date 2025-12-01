@@ -4,9 +4,10 @@ from .views import (
     delete_user_view, check_auth_view, bucket_list_view, my_trips_view,
     create_trip_view, add_to_bucket_list_view, add_to_my_trips_view,
     create_trip_for_bucket_list_view, create_trip_for_my_trips_view,
-    get_trip_view, create_plan_view, delete_plan_view, create_bnb_view,
+    get_trip_view, update_trip_view, delete_trip_view,
+    create_plan_view, delete_plan_view, create_bnb_view,
     update_bnb_view, create_rating_view, create_review_view, comfort_by_city,
-    current_weather
+    current_weather, complete_trip_view
 )
 
 urlpatterns = [
@@ -25,6 +26,9 @@ urlpatterns = [
     path("trips/create-for-bucket-list/", create_trip_for_bucket_list_view, name="create_trip_for_bucket_list"),
     path("trips/create-for-my-trips/", create_trip_for_my_trips_view, name="create_trip_for_my_trips"),
     path("trips/<int:trip_id>/", get_trip_view, name="get_trip"),
+    path("trips/<int:trip_id>/update/", update_trip_view, name="update_trip"),
+    path("trips/<int:trip_id>/delete/", delete_trip_view, name="delete_trip"),
+    path("trips/<int:trip_id>/complete/", complete_trip_view, name="complete_trip"),
     path("trips/<int:trip_id>/plans/", create_plan_view, name="create_plan"),
     path("plans/<int:plan_id>/", delete_plan_view, name="delete_plan"),
     path("trips/<int:trip_id>/bnb/", create_bnb_view, name="create_bnb"),
