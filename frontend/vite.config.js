@@ -1,23 +1,33 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
+import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [svelte()],
+
   server: {
-    host: 'localhost',  // Use localhost to match API URL
+    host: 'localhost',
     port: 5173,
     strictPort: false,
   },
-  // Set base path for production build to match Django's static file serving
+
+  // Django serves static files at /static/
   base: '/static/',
+
   build: {
+    // ⬅⬅⬅ THIS IS THE IMPORTANT PART
+    outDir: resolve(__dirname, '../backend/static'),
+
+    emptyOutDir: true,  // Clears old build files before writing new ones
+
     assetsDir: 'assets',
-    // Ensure assets are referenced correctly for Django
+
     rollupOptions: {
       output: {
-        // Keep asset paths relative to base
         assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       }
     }
   }
