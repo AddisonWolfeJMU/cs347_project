@@ -29,8 +29,8 @@ SECRET_KEY = os.getenv(
 
 ALLOWED_HOSTS = [
     "pinpoint-aaawo.ondigitalocean.app",
-    # "localhost",
-    # "127.0.0.1",
+    "localhost",
+    "127.0.0.1",
 ]
 
 # ==============================================================
