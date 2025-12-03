@@ -5,15 +5,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="{% static 'PinpointLogo-Small.png' %}" />
+    <link rel="icon" type="image/png" href="{% static 'PinpointLogo-Small.png' %}">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pinpoint</title>
 
-    <!-- Vite-built JS -->
-    <script type="module" crossorigin src="{% vite_asset 'main.js' %}"></script>
-
-    <!-- Vite-built CSS (if Vite emitted a main.css) -->
-    <link rel="stylesheet" href="{% vite_asset 'main.css' %}">
+    {% vite_js "src/main.js" %}
+    {% vite_css "src/main.js" %}
   </head>
 
   <body>
