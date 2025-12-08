@@ -18,12 +18,15 @@ export default defineConfig({
   build: {
     // ⬅⬅⬅ THIS IS THE IMPORTANT PART
     outDir: resolve(__dirname, '../backend/static'),
-
+    manifest: true,
     emptyOutDir: true,  // Clears old build files before writing new ones
 
     assetsDir: 'assets',
 
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'src/main.js')
+      },
       output: {
         assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/[name]-[hash].js',

@@ -1,0 +1,21 @@
+{
+  "src/assets/PinpointLogo.png": {
+    "file": "assets/PinpointLogo-b2c8a3b8.png",
+    "src": "src/assets/PinpointLogo.png"
+  },
+  "src/main.css": {
+    "file": "assets/main-4e7d67ef.css",
+    "src": "src/main.css"
+  },
+  "src/main.js": {
+    "assets": [
+      "assets/PinpointLogo-b2c8a3b8.png"
+    ],
+    "css": [
+      "assets/main-4e7d67ef.css"
+    ],
+    "file": "assets/main-17631ea2.js",
+    "isEntry": true,
+    "src": "src/main.js"
+  }
+}
