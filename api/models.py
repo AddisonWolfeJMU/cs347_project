@@ -62,6 +62,23 @@ class BucketList(models.Model):
         return f"{self.user.username}'s Bucket List"
 
 
+class Destination(models.Model):
+    """Simple model to store popular destination data from SerpAPI or other sources.
+    Fields chosen to match front-end needs: slug `id`, `name`, `image_url`, `price`, `category`, `region`, `link`, `description`.
+    """
+    slug = models.SlugField(max_length=255, unique=True)
+    name = models.CharField(max_length=400)
+    image_url = models.URLField(max_length=1000, blank=True, null=True)
+    price = models.CharField(max_length=100, blank=True, null=True)
+    category = models.CharField(max_length=100, blank=True, null=True)
+    region = models.CharField(max_length=100, blank=True, null=True)
+    link = models.URLField(max_length=1000, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.slug})"
+
+
 # Auto-create both lists for every user
 @receiver(post_save, sender=User)
 def create_user_lists(sender, instance, created, **kwargs):

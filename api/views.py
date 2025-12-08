@@ -8,7 +8,7 @@ from django.utils.decorators import method_decorator
 from django.contrib.auth.models import User
 from django.views.decorators.http import require_http_methods
 from functools import wraps
-from .models import BucketList, MyTrips, Trip, Plan, BNB, Rating, Review
+from .models import BucketList, MyTrips, Trip, Plan, BNB, Rating, Review, Destination
 from django.conf import settings
 
 
@@ -1297,3 +1297,38 @@ def comfort_by_city(request):
 
     except Exception as e:
         return Response({"error": str(e)}, status=500)
+
+
+@api_view(["GET"])
+def destinations_view(request):
+    """Return saved destinations from the database.
+
+    Optional query params:
+    - `region` to filter by region
+    - `category` to filter by category
+    """
+    try:
+        qs = Destination.objects.all()
+        region = request.GET.get('region')
+        category = request.GET.get('category')
+        if region:
+            qs = qs.filter(region__iexact=region)
+        if category:
+            qs = qs.filter(category__iexact=category)
+
+        results = []
+        for d in qs:
+            results.append({
+                'id': d.slug,
+                'name': d.name,
+                'image': d.image_url,
+                'price': d.price,
+                'category': d.category,
+                'region': d.region,
+                'link': d.link,
+                'description': d.description,
+            })
+
+        return Response({'results': results}, status=200)
+    except Exception as e:
+        return Response({'error': str(e)}, status=500)
