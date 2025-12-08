@@ -329,6 +329,35 @@
   max-width: 800px;
   margin: 0 auto;
 }
+/* Price comparison adjustments */
+.booking-card {
+  position: relative;
+}
+
+.price-comparison {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* align chart to the left of the booking card */
+}
+
+.price-comparison h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.price-comparison svg {
+  width: 100%;
+  max-width: 420px; /* match svg viewBox width used in JS */
+  height: auto;
+  display: block;
+  margin-left: 0; /* ensure left alignment inside the booking card */
+}
+
+.price-comparison .chart-placeholder {
+  color: #666;
+  font-size: 0.95rem;
+}
 
 .booking-card h2 {
   font-size: 2.5rem;
@@ -360,6 +389,39 @@
   background: #0056b3;
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(11, 108, 255, 0.4);
+}
+
+/* New: Price chart section that sits below the booking card */
+.price-chart-section {
+  padding: 32px 0 80px 0;
+  background: var(--surface);
+  display: flex;
+  justify-content: center;
+}
+
+.chart-box {
+  width: 100%;
+  max-width: 760px;
+  background: var(--bg);
+  padding: 22px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  text-align: center;
+}
+
+.chart-box h3 {
+  margin: 0 0 12px 0;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.chart-box svg {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  overflow: visible; /* allow labels to render fully */
 }
 
 /* Responsive Design */

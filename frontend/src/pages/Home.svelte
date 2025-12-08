@@ -1,83 +1,82 @@
 <script>
   import logo from '../assets/PinpointLogo.png'
   import '../styles/home.css'
+  import { onMount } from 'svelte'
   export let query = ''
   export let search
   const onEnter = (e) => { if (e.key === 'Enter') search?.() }
-  
-  // All destinations data
-  const destinations = {
-    'new-england': {
-      name: 'New England',
-      image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=500',
-      price: 'From $299',
-      category: 'mountains',
-      id: 'new-england'
-    },
-    'aspen-colorado': {
-      name: 'Aspen, Colorado',
-      image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500',
-      price: 'From $450',
-      category: 'mountains',
-      id: 'aspen-colorado'
-    },
-    'vermont': {
-      name: 'Vermont',
-      image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=500',
-      price: 'From $199',
-      category: 'mountains',
-      id: 'vermont'
-    },
-    'bali-indonesia': {
-      name: 'Bali, Indonesia',
-      image: 'https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=500',
-      price: 'From $599',
-      category: 'beaches',
-      id: 'bali-indonesia'
-    },
-    'santorini-greece': {
-      name: 'Santorini, Greece',
-      image: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=500',
-      price: 'From $799',
-      category: 'beaches',
-      id: 'santorini-greece'
-    },
-    'dubai-uae': {
-      name: 'Dubai, UAE',
-      image: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=500',
-      price: 'From $699',
-      category: 'cities',
-      id: 'dubai-uae'
-    },
-    'swiss-alps': {
-      name: 'Swiss Alps',
-      image: 'https://s1.it.atcdn.net/wp-content/uploads/2015/11/shutterstock_279572969.jpg',
-      price: 'From $899',
-      category: 'mountains',
-      id: 'swiss-alps'
-    },
-    'iceland': {
-      name: 'Iceland',
-      image: 'https://cdn.britannica.com/06/171306-050-C88DD752/Aurora-borealis-peninsula-Snaefellsnes-Iceland-March-2013.jpg',
-      price: 'From $599',
-      category: 'adventure',
-      id: 'iceland'
-    },
-    'banff-canada': {
-      name: 'Banff, Canada',
-      image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=500',
-      price: 'From $399',
-      category: 'mountains',
-      id: 'banff-canada'
+
+
+  let destinations = {}
+  let isLoadingDestinations = false
+
+  // Helper function to categorize destinations based on their characteristics
+  function categorizeDestination(name, description, region) {
+    const nameLower = name.toLowerCase()
+    const descLower = (description || '').toLowerCase()
+    
+    // Romantic destinations
+    if (nameLower.includes('paris') || descLower.includes('romance') || descLower.includes('romantic')) {
+      return 'romantic'
     }
+    
+    // Beach/coastal destinations
+    if (nameLower.includes('dubai') || nameLower.includes('hong kong') || 
+        descLower.includes('beach') || descLower.includes('coast')) {
+      return 'beaches'
+    }
+    
+    // Adventure destinations
+    if (descLower.includes('adventure') || descLower.includes('safari') || 
+        descLower.includes('hiking') || nameLower.includes('tokyo')) {
+      return 'adventure'
+    }
+    
+    // Default to cities (all our destinations are city-based)
+    return 'cities'
   }
-  
+
+  onMount(async () => {
+  isLoadingDestinations = true
+  try {
+    const res = await fetch('/practice_results.json', { cache: 'no-store' })
+    if (!res.ok) throw new Error(`Failed to fetch destinations: ${res.status}`)
+    const payload = await res.json()
+    const combined = payload.results || {}
+    const items = []
+
+    for (const region of Object.keys(combined)) {
+      const list = combined[region] || []
+      for (const it of list) {
+        const name = it.title || it.name || ''
+        if (!name) continue
+        const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+        const image = it.thumbnail || it.image || ''
+        const price = it.flight_price ? `From ${it.flight_price}` :
+                      (it.extracted_flight_price ? `From $${it.extracted_flight_price}` : 'From $0')
+        const description = it.description || ''
+        const category = categorizeDestination(name, description, region)
+        items.push({ id, name, image, price, category, region, description })
+      }
+    }
+
+    destinations = Object.fromEntries(items.map(d => [d.id, d]))
+    filterDestinations()   
+  } catch (err) {
+    console.error('Error loading destinations:', err)
+    destinations = {}
+    filterDestinations()
+  } finally {
+    isLoadingDestinations = false
+  }
+})
   // Filter categories
   const categories = [
     { name: "All", emoji: "🌍", color: "#6366f1", value: "all" },
-    { name: "Beaches", emoji: "🏖️", color: "#4FC3F7", value: "beaches" },
+    { name: "Europe", emoji: "🇪🇺", color: "#FF9800", value: "europe" },
+    { name: "Asia", emoji: "🌏", color: "#E91E63", value: "asia" },
     { name: "Cities", emoji: "🏙️", color: "#FF7043", value: "cities" },
-    { name: "Mountains", emoji: "🏔️", color: "#66BB6A", value: "mountains" },
+    { name: "Beaches", emoji: "🏖️", color: "#4FC3F7", value: "beaches" },
     { name: "Adventure", emoji: "🧗‍♀️", color: "#AB47BC", value: "adventure" },
     { name: "Romantic", emoji: "💕", color: "#F06292", value: "romantic" }
   ]
@@ -93,9 +92,16 @@
   function filterDestinations() {
     let results = Object.values(destinations)
     
-    // Apply category filter
+    // Apply category/region filter
     if (selectedCategory !== 'all') {
-      results = results.filter(dest => dest.category === selectedCategory)
+      results = results.filter(dest => {
+        // Check if it's a region filter
+        if (selectedCategory === 'europe' || selectedCategory === 'asia') {
+          return dest.region && dest.region.toLowerCase() === selectedCategory
+        }
+        // Otherwise check category
+        return dest.category === selectedCategory
+      })
     }
     
     // Apply search query filter
@@ -103,7 +109,9 @@
       const searchTerm = query.toLowerCase().trim()
       results = results.filter(dest => 
         dest.name.toLowerCase().includes(searchTerm) ||
-        dest.category.toLowerCase().includes(searchTerm) ||
+        (dest.category && dest.category.toLowerCase().includes(searchTerm)) ||
+        (dest.region && dest.region.toLowerCase().includes(searchTerm)) ||
+        (dest.description && dest.description.toLowerCase().includes(searchTerm)) ||
         dest.id.toLowerCase().includes(searchTerm)
       )
     }
