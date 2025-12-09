@@ -18,16 +18,25 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
+
+function getCookie(name) {
+  return document.cookie
+    .split("; ")
+    .find(row => row.startsWith(name + "="))
+    ?.split("=")[1];
+}
+
 /**
  * Make an API request with proper error handling
  */
 async function apiRequest(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
-  
+  const csrfToken = getCookie('csrftoken');
   const config = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(csrfToken && { "X-CSRFToken": csrfToken}),
       ...options.headers,
     },
     credentials: 'include', // Important for session cookies

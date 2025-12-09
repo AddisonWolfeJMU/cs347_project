@@ -10,7 +10,8 @@ from django.views.decorators.http import require_http_methods
 from functools import wraps
 from .models import BucketList, MyTrips, Trip, Plan, BNB, Rating, Review, Destination
 from django.conf import settings
-
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.generic import TemplateView
 
 ### Helper function to build image URLs ###
 def get_image_url(request, image_field):
@@ -72,12 +73,14 @@ def json_login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapped_view
 
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class IndexView(TemplateView):
+    template_name = "index.html"
 
 ### Delete a User ###
 # Must be logged in
 @login_required
 @require_http_methods(["DELETE"])
-@csrf_exempt  # remove later when CSRF is handled
 def delete_user_view(request):
     try:
         data = json.loads(request.body)
@@ -107,7 +110,6 @@ def delete_user_view(request):
 
 ### Update user info ###
 @json_login_required
-@csrf_exempt
 def update_user_view(request):
     if request.method not in ["PUT", "PATCH", "POST"]:
         return JsonResponse({"error": "PUT, PATCH, or POST request required."}, status=400)
@@ -172,7 +174,6 @@ def update_user_view(request):
 
 
 ### Register New User ###
-@csrf_exempt  # we'll remove this later once CSRF tokens are set up for Svelte
 def register_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
@@ -219,22 +220,21 @@ def register_view(request):
         max_age = settings.SESSION_COOKIE_AGE
         
         # Set cookie with explicit attributes
-        response.set_cookie(
-            'sessionid',
-            cookie_value,
-            max_age=max_age,  # Use max_age (in seconds)
-            path=settings.SESSION_COOKIE_PATH,
-            domain=settings.SESSION_COOKIE_DOMAIN,
-            secure=settings.SESSION_COOKIE_SECURE,
-            httponly=settings.SESSION_COOKIE_HTTPONLY,
-            samesite='Lax'  # Use Lax for localhost compatibility
-        )
+        # response.set_cookie(
+        #     'sessionid',
+        #     cookie_value,
+        #     max_age=max_age,  # Use max_age (in seconds)
+        #     path=settings.SESSION_COOKIE_PATH,
+        #     domain=settings.SESSION_COOKIE_DOMAIN,
+        #     secure=settings.SESSION_COOKIE_SECURE,
+        #     httponly=settings.SESSION_COOKIE_HTTPONLY,
+        #     samesite='Lax'  # Use Lax for localhost compatibility
+        # )
     
     return response
 
 
 ### User Login ###
-@csrf_exempt  #change this later
 def login_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
@@ -282,17 +282,17 @@ def login_view(request):
             # Set cookie with explicit attributes
             # For localhost, use 'Lax' which works when frontend/backend use same hostname
             # If using different origins, ensure both use same hostname (localhost or 127.0.0.1)
-            response.set_cookie(
-                'sessionid',
-                cookie_value,
-                max_age=max_age,  # Use max_age (in seconds)
-                path=settings.SESSION_COOKIE_PATH,
-                domain=settings.SESSION_COOKIE_DOMAIN,
-                secure=settings.SESSION_COOKIE_SECURE,
-                httponly=settings.SESSION_COOKIE_HTTPONLY,
-                samesite='Lax'  # Use Lax for localhost compatibility
-            )
-            print(f"Login: Manually set session cookie: {cookie_value[:20]}...")
+            # response.set_cookie(
+            #     'sessionid',
+            #     cookie_value,
+            #     max_age=max_age,  # Use max_age (in seconds)
+            #     path=settings.SESSION_COOKIE_PATH,
+            #     domain=settings.SESSION_COOKIE_DOMAIN,
+            #     secure=settings.SESSION_COOKIE_SECURE,
+            #     httponly=settings.SESSION_COOKIE_HTTPONLY,
+            #     samesite='Lax'  # Use Lax for localhost compatibility
+            # )
+            # print(f"Login: Manually set session cookie: {cookie_value[:20]}...")
         
         return response
     
@@ -305,7 +305,6 @@ def login_view(request):
 
 
 ### User Logout ###
-@csrf_exempt  # remove later when CSRF is set up
 def logout_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST request required."}, status=400)
@@ -315,7 +314,6 @@ def logout_view(request):
 
 
 ### Check Authentication Status ###
-@csrf_exempt  # Allow GET requests without CSRF
 def check_auth_view(request):
     """Check if user is authenticated (no login required)"""
     # Debug: Check if session exists
@@ -363,7 +361,6 @@ def check_auth_view(request):
 
 ### View User Data ###
 @json_login_required
-@csrf_exempt
 def user_view(request):
     user = request.user
     return JsonResponse({
@@ -378,7 +375,6 @@ def user_view(request):
 
 ### Get Bucket List ###
 @json_login_required
-@csrf_exempt
 def bucket_list_view(request):
     """Get all trips in the user's bucket list"""
     user = request.user
@@ -411,7 +407,6 @@ def bucket_list_view(request):
 
 ### Get My Trips ###
 @json_login_required
-@csrf_exempt
 def my_trips_view(request):
     """Get all trips in the user's MyTrips"""
     user = request.user
@@ -444,7 +439,6 @@ def my_trips_view(request):
 
 ### Create Trip ###
 @json_login_required
-@csrf_exempt
 def create_trip_view(request):
     """Create a new trip"""
     if request.method != "POST":
@@ -497,7 +491,6 @@ def create_trip_view(request):
 
 ### Update Trip ###
 @json_login_required
-@csrf_exempt
 def update_trip_view(request, trip_id):
     """Update an existing trip's basic details (name, location, date)."""
     if request.method not in ["PUT", "PATCH", "POST"]:
@@ -549,7 +542,6 @@ def update_trip_view(request, trip_id):
 
 ### Delete Trip ###
 @json_login_required
-@csrf_exempt
 def delete_trip_view(request, trip_id):
     """Delete a trip and its related data."""
     if request.method != "DELETE":
@@ -575,7 +567,6 @@ def delete_trip_view(request, trip_id):
 
 ### Add Trip to Bucket List ###
 @json_login_required
-@csrf_exempt
 def add_to_bucket_list_view(request):
     """Add a trip to the user's bucket list"""
     if request.method != "POST":
@@ -610,7 +601,6 @@ def add_to_bucket_list_view(request):
 
 ### Add Trip to My Trips ###
 @json_login_required
-@csrf_exempt
 def add_to_my_trips_view(request):
     """Add a trip to the user's MyTrips"""
     if request.method != "POST":
@@ -645,7 +635,6 @@ def add_to_my_trips_view(request):
 
 ### Create Trip and Add to Bucket List ###
 @json_login_required
-@csrf_exempt
 def create_trip_for_bucket_list_view(request):
     """Create a new trip and add it to bucket list in one call"""
     if request.method != "POST":
@@ -720,7 +709,6 @@ def create_trip_for_bucket_list_view(request):
 
 ### Create Trip and Add to My Trips ###
 @json_login_required
-@csrf_exempt
 def create_trip_for_my_trips_view(request):
     """Create a new trip and add it to MyTrips in one call"""
     if request.method != "POST":
@@ -795,7 +783,6 @@ def create_trip_for_my_trips_view(request):
 
 ### Get Trip Details ###
 @json_login_required
-@csrf_exempt
 def get_trip_view(request, trip_id):
     """Get detailed information about a specific trip"""
     user = request.user
@@ -872,7 +859,6 @@ def get_trip_view(request, trip_id):
 
 ### Mark Trip as Completed (move to My Trips and remove from Bucket List) ###
 @json_login_required
-@csrf_exempt
 def complete_trip_view(request, trip_id):
     """Mark a trip as completed by moving it to MyTrips and removing it from the bucket list."""
     if request.method != "POST":
@@ -906,7 +892,6 @@ def complete_trip_view(request, trip_id):
 
 ### Create Plan for Trip ###
 @json_login_required
-@csrf_exempt
 def create_plan_view(request, trip_id):
     """Create a plan/activity for a trip"""
     if request.method != "POST":
@@ -945,7 +930,6 @@ def create_plan_view(request, trip_id):
 
 ### Delete Plan ###
 @json_login_required
-@csrf_exempt
 def delete_plan_view(request, plan_id):
     """Delete a plan"""
     if request.method != "DELETE":
@@ -971,7 +955,6 @@ def delete_plan_view(request, plan_id):
 
 ### Create BNB for Trip ###
 @json_login_required
-@csrf_exempt
 def create_bnb_view(request, trip_id):
     """Create a BNB/accommodation for a trip"""
     if request.method != "POST":
@@ -1017,7 +1000,6 @@ def create_bnb_view(request, trip_id):
 
 ### Update BNB ###
 @json_login_required
-@csrf_exempt
 def update_bnb_view(request, bnb_id):
     """Update a BNB"""
     if request.method not in ["PUT", "PATCH", "POST"]:
@@ -1058,7 +1040,6 @@ def update_bnb_view(request, bnb_id):
 
 ### Create Rating for BNB ###
 @json_login_required
-@csrf_exempt
 def create_rating_view(request, bnb_id):
     """Create a rating for a BNB (only for completed trips)"""
     if request.method != "POST":
@@ -1102,7 +1083,6 @@ def create_rating_view(request, bnb_id):
 
 ### Create Review for BNB ###
 @json_login_required
-@csrf_exempt
 def create_review_view(request, bnb_id):
     """Create a review for a BNB (only for completed trips)"""
     if request.method != "POST":
@@ -1163,7 +1143,7 @@ from backend.ml.pipeline import predict_comfort
 from backend.ml.weather_utils import geocode_city
 
 @api_view(["GET"])
-@csrf_exempt
+
 def current_weather(request):
     """Get current weather temperature for a city"""
     try:

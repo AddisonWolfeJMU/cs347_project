@@ -14,10 +14,12 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENVIRONMENT = os.getenv("DJANGO_ENV", "production")
-DEBUG = ENVIRONMENT != "production"   # DEBUG=False on DigitalOcean by default
-
+# Load environment first
 load_dotenv(BASE_DIR / "passwords.env")
+
+# THEN read values
+ENVIRONMENT = os.getenv("DJANGO_ENV", "production")
+DEBUG = ENVIRONMENT != "production"
 
 API_KEY = os.getenv("API_KEY")
 API_SECRET = os.getenv("API_SECRET")
@@ -44,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_vite",
     "rest_framework",
     "corsheaders",
     "api",
@@ -175,3 +178,23 @@ SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = not DEBUG  # True in production
 SESSION_COOKIE_AGE = 1209600
+
+DJANGO_VITE = {
+    "default": {
+        "dev_mode": DEBUG,
+        "manifest_path": BASE_DIR / "backend" / "static" / "manifest.json",
+        "dev_server_host": "localhost",
+        "dev_server_port": 5173,
+    }
+}
+
+# ==============================================================
+# CSRF SETTINGS
+# ==============================================================
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://pinpoint-aaawo.ondigitalocean.app",
+]
+
+CSRF_COOKIE_SECURE = not DEBUG      # True in production, same as session cookie
+CSRF_COOKIE_SAMESITE = "Lax"        # Works well with same-origin SPA

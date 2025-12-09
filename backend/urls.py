@@ -19,11 +19,12 @@ from django.urls import path, include
 from django.views.generic import TemplateView
 from django.conf import settings
 from django.conf.urls.static import static
-
+from django.views.decorators.csrf import ensure_csrf_cookie
+from api.views import IndexView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
-    path('', TemplateView.as_view(template_name="index.html")),
+    path('', IndexView.as_view(), name="index"),
 ]
 
 # Serve media files in development - always serve media files
