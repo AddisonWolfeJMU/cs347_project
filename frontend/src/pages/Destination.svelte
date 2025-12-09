@@ -61,7 +61,7 @@
   async function loadDestinations() {
     isLoadingDestinations = true
     try {
-      const res = await fetch('/practice_results.json', { cache: 'no-store' })
+      const res = await fetch('/static/practice_results.json', { cache: 'no-store' })
       if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`)
       const payload = await res.json()
       const combined = payload.results || {}

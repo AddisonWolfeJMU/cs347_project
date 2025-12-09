@@ -1,0 +1,105 @@
+{
+  "queries": [
+    "popular destinations in Europe",
+    "popular destinations in Asia"
+  ],
+  "results": {
+    "europe": [
+      {
+        "title": "Lisbon",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Lisbon&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMve2KHm-gpeCLfF1O4ReFI10n9JjO3vBwzKB1HkzEQv2dovAbQ%3D%3D&sa=X&ved=2ahUKEwj8sbHCzNuQAxXqOTQIHSpHN4cQs4ILegQIOBAD",
+        "description": "Discover Portugal's vibrant capital with its historic hilltop São Jorge Castle, charming Alfama district with cobblestone streets, iconic yellow trams, and authentic fado music venues. Experience the perfect blend of traditional and modern culture along the Tagus River.",
+        "flight_price": "$819",
+        "extracted_flight_price": 819,
+        "thumbnail": "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80",
+        "best_time_to_visit": "April to October for warm weather and outdoor festivals. Spring (March-May) offers mild temperatures and fewer crowds."
+      },
+      {
+        "title": "Edinburgh",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Edinburgh&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMuuIibmhGxYfZt3oMltJeyMtZiYsbaB5kOQQJkNgctC4UA8xOA%3D%3D&sa=X&ved=2ahUKEwj8sbHCzNuQAxXqOTQIHSpHN4cQs4ILegQIORAD",
+        "description": "Scotland's enchanting capital features the majestic Edinburgh Castle perched on volcanic rock, the historic Royal Mile, world-class museums, and hosts the famous Edinburgh Festival Fringe. Explore medieval Old Town and elegant Georgian New Town.",
+        "flight_price": "$1,102",
+        "extracted_flight_price": 1102,
+        "thumbnail": "https://images.unsplash.com/photo-1549918864-48ac978761a4?w=800&q=80",
+        "best_time_to_visit": "August for the Edinburgh Festival Fringe, or May-September for pleasant weather. Late spring offers longer days and blooming gardens."
+      },
+      {
+        "title": "London",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=London&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMkVLjkc_ZZQHX3fo4ZG5y2Z6aVhXz19moMTCngY0XC5JTu8U5Q%3D%3D&sa=X&ved=2ahUKEwj8sbHCzNuQAxXqOTQIHSpHN4cQs4ILegQIQBAD",
+        "description": "Experience the UK's cosmopolitan capital with iconic landmarks including Big Ben, Tower Bridge, and Buckingham Palace. Visit world-renowned museums like the British Museum and Tate Modern, enjoy West End shows, and explore diverse neighborhoods from Soho to Camden.",
+        "flight_price": "$740",
+        "extracted_flight_price": 740,
+        "drive_duration": "1h",
+        "thumbnail": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80",
+        "best_time_to_visit": "Late spring to early fall (May-September) for best weather and outdoor activities. December is magical for Christmas markets and festivities."
+      },
+      {
+        "title": "Dublin",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Dublin&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMnTdMnG8netoENkgAEmHrwi00_oifHWuC5Vq74R0U9_iXNUwPg%3D%3D&sa=X&ved=2ahUKEwj8sbHCzNuQAxXqOTQIHSpHN4cQs4ILegQIPhAD",
+        "description": "Ireland's lively capital offers rich history at Dublin Castle and Trinity College where the Book of Kells is housed. Enjoy traditional Irish pubs in Temple Bar, Georgian architecture, friendly locals, and literary heritage from Joyce to Wilde.",
+        "flight_price": "$691",
+        "extracted_flight_price": 691,
+        "thumbnail": "https://images.unsplash.com/photo-1549918864-48ac978761a4?w=800&q=80",
+        "best_time_to_visit": "June to August for warmest weather and longest days. March for St. Patrick's Day festivities, or September-October for fewer tourists."
+      },
+      {
+        "title": "Paris",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Paris&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMns3LhLZtUlB31pO07scaEEg2EO3xvtBiYi5A5DMIBcflscokQ%3D%3D&sa=X&ved=2ahUKEwj8sbHCzNuQAxXqOTQIHSpHN4cQs4ILegQIQhAD",
+        "description": "The City of Light captivates with the iconic Eiffel Tower, world-class Louvre Museum, charming Montmartre district, and elegant Champs-Élysées. Savor exquisite cuisine, sip coffee at sidewalk cafés, and experience unparalleled art, fashion, and romance.",
+        "flight_price": "$668",
+        "extracted_flight_price": 668,
+        "thumbnail": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=800&q=80",
+        "best_time_to_visit": "April to June or September to October for pleasant weather and fewer crowds. Spring offers blooming gardens, fall brings harvest season charm."
+      }
+    ],
+    "asia": [
+      {
+        "title": "Tokyo",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Tokyo&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMi9UhP98nMgfd1SLKEbjwIA8sBtPQ6yzJUHiNDIJxONKNxfFig%3D%3D&sa=X&ved=2ahUKEwjv2-i_ztuQAxWQ5MkDHSv3AyAQs4ILegQIdRAD",
+        "description": "Japan's dynamic capital seamlessly blends ancient traditions with cutting-edge technology. Visit the serene Meiji Shrine, explore bustling Shibuya and Shinjuku districts, experience cherry blossoms, taste authentic sushi, and discover unique pop culture in Harajuku and Akihabara.",
+        "flight_price": "$848",
+        "extracted_flight_price": 848,
+        "drive_duration": "1h",
+        "thumbnail": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&q=80",
+        "best_time_to_visit": "March to May for cherry blossom season, or October to November for fall foliage. Spring and autumn offer mild weather and stunning natural beauty."
+      },
+      {
+        "title": "Hong Kong",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Hong+Kong&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMtxGDPYNz0-esMIBFpoCaPv83u9MM9EJeXmR32F-Ye2jd9xHuw%3D%3D&sa=X&ved=2ahUKEwjv2-i_ztuQAxWQ5MkDHSv3AyAQs4ILegQIfhAD",
+        "description": "A spectacular fusion of East and West, Hong Kong dazzles with its iconic skyline, Victoria Peak panoramic views, vibrant street markets, world-class shopping, and incredible dim sum. Take the Star Ferry across Victoria Harbour and explore Kowloon's bustling streets.",
+        "flight_price": "$713",
+        "extracted_flight_price": 713,
+        "thumbnail": "https://images.unsplash.com/photo-1536599018102-9f803c140fc1?w=800&q=80",
+        "best_time_to_visit": "October to December for comfortable temperatures and clear skies. Avoid June to September (typhoon season) and Chinese New Year for better prices."
+      },
+      {
+        "title": "Singapore",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Singapore&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMpmOcw0TF3xwNxf9DBGXOVJ9RXOtf_fqfPKWxR_b4UZVFnh11g%3D%3D&sa=X&ved=2ahUKEwjv2-i_ztuQAxWQ5MkDHSv3AyAQs4ILegQIfxAD",
+        "description": "The Lion City is a modern marvel featuring futuristic Gardens by the Bay, the stunning Marina Bay Sands, diverse neighborhoods like Chinatown and Little India, world-class dining, pristine streets, and a perfect blend of cultures. A true Southeast Asian gem.",
+        "flight_price": "$742",
+        "extracted_flight_price": 742,
+        "thumbnail": "https://images.unsplash.com/photo-1525625293386-3f8f99389edd?w=800&q=80",
+        "best_time_to_visit": "February to April for drier weather and outdoor activities. Year-round destination with tropical climate - avoid November to January monsoon season."
+      },
+      {
+        "title": "Dubai",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Dubai&si=AMgyJEveiRpRWbYSNPkEPxCUbItHSvun4xkRgDDPLmrOjDx35FTa07smINrgm9AOzvjULTTvJFf7OP-n2iDuCqYSRtAI5SXPRg%3D%3D&sa=X&ved=2ahUKEwjv2-i_ztuQAxWQ5MkDHSv3AyAQs4ILegQIfRAD",
+        "description": "Experience luxury and innovation in this desert oasis. Marvel at the world's tallest building Burj Khalifa, shop at extravagant malls, relax at pristine beaches, explore traditional souks, and enjoy desert safaris. Dubai offers unmatched opulence and entertainment.",
+        "flight_price": "$650",
+        "extracted_flight_price": 650,
+        "drive_duration": "1h",
+        "thumbnail": "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800&q=80",
+        "best_time_to_visit": "November to March for cooler weather perfect for outdoor activities and beach time. Avoid summer (June-August) when temperatures exceed 100°F."
+      },
+      {
+        "title": "Bangkok",
+        "link": "https://www.google.com/search?sca_esv=0cb097f5cf89beeb&hl=en&q=Bangkok&si=AMgyJEvmed8FkyEkpEJ8jfGhZkakcy5kQho_c4G-QJRdklshMqPPn_vQ2pQ-t3uvzX6vyD_AnPsjCN6Iji6DxqScJNLSyFaHXw%3D%3D&sa=X&ved=2ahUKEwjv2-i_ztuQAxWQ5MkDHSv3AyAQs4ILegQIfBAD",
+        "description": "Thailand's vibrant capital enchants with ornate temples like the Grand Palace and Wat Phra Kaew, floating markets, incredible street food, bustling nightlife, and friendly locals. Experience the perfect mix of ancient culture and modern energy along the Chao Phraya River.",
+        "flight_price": "$744",
+        "extracted_flight_price": 744,
+        "thumbnail": "https://images.unsplash.com/photo-1563492065599-3520f775eeed?w=800&q=80",
+        "best_time_to_visit": "November to February for cooler, dry weather ideal for sightseeing. Avoid April-May (extremely hot) and September-October (monsoon season)."
+      }
+    ]
+  }
+}

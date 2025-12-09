@@ -4,7 +4,7 @@
     "src": "src/assets/PinpointLogo.png"
   },
   "src/main.css": {
-    "file": "assets/main-4e7d67ef.css",
+    "file": "assets/main-10028662.css",
     "src": "src/main.css"
   },
   "src/main.js": {
@@ -12,9 +12,9 @@
       "assets/PinpointLogo-b2c8a3b8.png"
     ],
     "css": [
-      "assets/main-4e7d67ef.css"
+      "assets/main-10028662.css"
     ],
-    "file": "assets/main-17631ea2.js",
+    "file": "assets/main-00c2b0a4.js",
     "isEntry": true,
     "src": "src/main.js"
   }
